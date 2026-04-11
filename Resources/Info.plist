@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- App Identity -->
+    <key>CFBundleIdentifier</key>
+    <string>com.voicepepper.app</string>
+    <key>CFBundleName</key>
+    <string>VoicePepper</string>
+    <key>CFBundleDisplayName</key>
+    <string>VoicePepper</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0.0</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleExecutable</key>
+    <string>VoicePepper</string>
+
+    <!-- Hide dock icon - status bar agent app -->
+    <key>LSUIElement</key>
+    <true/>
+
+    <!-- macOS deployment -->
+    <key>LSMinimumSystemVersion</key>
+    <string>13.0</string>
+
+    <!-- Microphone permission (Task 1.3) -->
+    <key>NSMicrophoneUsageDescription</key>
+    <string>VoicePepper 需要访问麦克风以录制语音并进行本地转录。所有音频处理均在本设备上完成，不会上传到任何服务器。</string>
+
+    <!-- Accessibility permission description (for global hotkey) -->
+    <key>NSAppleEventsUsageDescription</key>
+    <string>VoicePepper 需要辅助功能权限以注册全局快捷键，实现在任意应用中触发录音。</string>
+
+    <!-- App category -->
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.productivity</string>
+
+    <!-- Main nib (none - SwiftUI) -->
+    <key>NSPrincipalClass</key>
+    <string>NSApplication</string>
+</dict>
+</plist>
