@@ -1,0 +1,1 @@
+/skill-creator @/Users/wuzhiguo/projects/VoicePepper/.claude/skills/kb-dev-workflow/SKILL.md 优化该skill, 端到端测试部分要适配当前项目, 使用macos-ui-automation

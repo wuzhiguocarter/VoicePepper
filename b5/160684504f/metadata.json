@@ -3,7 +3,7 @@
   "checkpoint_id": "b5160684504f",
   "strategy": "manual-commit",
   "branch": "feature/recording-history-player",
-  "checkpoints_count": 1,
+  "checkpoints_count": 2,
   "files_touched": [
     ".claude/skills/kb-dev-workflow/SKILL.md",
     "Sources/VoicePepper/App/AppDelegate.swift",
@@ -28,13 +28,19 @@
       "transcript": "/b5/160684504f/1/full.jsonl",
       "content_hash": "/b5/160684504f/1/content_hash.txt",
       "prompt": "/b5/160684504f/1/prompt.txt"
+    },
+    {
+      "metadata": "/b5/160684504f/2/metadata.json",
+      "transcript": "/b5/160684504f/2/full.jsonl",
+      "content_hash": "/b5/160684504f/2/content_hash.txt",
+      "prompt": "/b5/160684504f/2/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 9339,
-    "cache_creation_tokens": 1383611,
-    "cache_read_tokens": 48250381,
-    "output_tokens": 250548,
-    "api_call_count": 510
+    "input_tokens": 11391,
+    "cache_creation_tokens": 1500091,
+    "cache_read_tokens": 48541060,
+    "output_tokens": 260543,
+    "api_call_count": 518
   }
 }
