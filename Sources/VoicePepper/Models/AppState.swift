@@ -53,6 +53,11 @@ final class AppState: ObservableObject {
     @Published var micPermissionDenied: Bool = false
     @Published var accessibilityPermissionGranted: Bool = false
 
+    // 历史录音（由 RecordingFileService 驱动）
+    var recordingFileService: RecordingFileService?
+    /// 当前正在播放的录音 ID（nil 表示无播放）
+    @Published var currentlyPlayingId: UUID? = nil
+
     // Preferences
     @Published var selectedModel: WhisperModel {
         didSet { UserDefaults.standard.set(selectedModel.rawValue, forKey: "selectedModel") }

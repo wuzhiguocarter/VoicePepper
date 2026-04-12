@@ -25,6 +25,11 @@ final class AudioCaptureService {
     let audioSegmentPublisher = PassthroughSubject<AudioSegment, Never>()
     /// Emits current RMS level 0..1 for waveform display
     let levelPublisher = PassthroughSubject<Float, Never>()
+    /// 录音会话结束时发出，携带本次会话全部 PCM 样本（所有 VAD 段合并）
+    let sessionEndPublisher = PassthroughSubject<[Float], Never>()
+
+    /// 当前录音会话累积的 PCM 样本（所有 VAD 段依次追加）
+    private var sessionSamples: [Float] = []
 
     private let engine = AVAudioEngine()
     private var converter: AVAudioConverter?
@@ -55,11 +60,12 @@ final class AudioCaptureService {
             }
             .store(in: &cancellables)
 
-        // Hook VAD segment-complete → publish AudioSegment
+        // Hook VAD segment-complete → publish AudioSegment + 累积会话样本
         vadDetector.onSegmentComplete = { [weak self] samples in
             guard let self else { return }
             let segment = AudioSegment(samples: samples, capturedAt: Date())
             self.audioSegmentPublisher.send(segment)
+            self.sessionSamples.append(contentsOf: samples)
         }
     }
 
@@ -94,8 +100,17 @@ final class AudioCaptureService {
         // Flush remaining samples as final segment
         let remaining = ringBuffer.drainAll()
         if !remaining.isEmpty {
-            audioSegmentPublisher.send(AudioSegment(samples: remaining, capturedAt: Date()))
+            let segment = AudioSegment(samples: remaining, capturedAt: Date())
+            audioSegmentPublisher.send(segment)
+            sessionSamples.append(contentsOf: remaining)
         }
+
+        // 发出完整会话样本供持久化，然后清空缓冲
+        let completedSession = sessionSamples
+        if !completedSession.isEmpty {
+            sessionEndPublisher.send(completedSession)
+        }
+        sessionSamples.removeAll()
 
         vadDetector.reset()
         ringBuffer.reset()
