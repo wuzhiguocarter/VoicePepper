@@ -26,7 +26,8 @@ struct RecordingItem: Identifiable, Equatable {
 
 // MARK: - Recording File Service
 
-/// 负责将录音会话 PCM 样本持久化为 M4A 文件，并管理历史录音列表。
+/// 负责将录音会话 PCM 样本持久化为 WAV 文件，并管理历史录音列表。
+/// 使用 PCM 直写（无需 AAC 编码），AVAudioPlayer 原生支持 WAV 回放。
 @MainActor
 final class RecordingFileService: ObservableObject {
 
@@ -57,7 +58,13 @@ final class RecordingFileService: ObservableObject {
                 options: .skipsHiddenFiles
             )
             recordings = urls
-                .filter { $0.pathExtension.lowercased() == "m4a" }
+                // 同时支持 wav（新格式）和旧的空 m4a 文件（排除零字节文件）
+                .filter {
+                    let ext = $0.pathExtension.lowercased()
+                    guard ext == "wav" || ext == "m4a" else { return false }
+                    let size = (try? FileManager.default.attributesOfItem(atPath: $0.path)[.size] as? Int) ?? 0
+                    return size > 0
+                }
                 .compactMap { url -> RecordingItem? in
                     let attrs = try? url.resourceValues(forKeys: [.contentModificationDateKey])
                     let createdAt = attrs?.contentModificationDate ?? Date()
@@ -72,20 +79,19 @@ final class RecordingFileService: ObservableObject {
 
     // MARK: 保存
 
-    /// 将整个会话的完整 PCM 样本异步写为一个 M4A 文件（合并所有 VAD 段）。
+    /// 将整个会话的完整 PCM 样本异步写为一个 WAV 文件（合并所有 VAD 段）。
     func save(samples: [Float], sampleRate: Double = 16000) {
         guard !samples.isEmpty else { return }
         let outputURL = makeOutputURL()
-        // 用 Task 保持 @MainActor 上下文，I/O 通过内层 Task.detached 在后台执行
         Task { @MainActor [weak self] in
             guard let self else { return }
             do {
                 let duration = try await Task.detached(priority: .utility) {
-                    try Self.writeM4A(samples: samples, sampleRate: sampleRate, to: outputURL)
+                    try Self.writeWAV(samples: samples, sampleRate: sampleRate, to: outputURL)
                 }.value
                 let item = RecordingItem(id: UUID(), url: outputURL, duration: duration, createdAt: Date())
                 self.recordings.insert(item, at: 0)
-                NSLog("[RecordingFileService] 已保存: %@", outputURL.lastPathComponent)
+                NSLog("[RecordingFileService] 已保存: %@ (%.1fs)", outputURL.lastPathComponent, duration)
             } catch {
                 NSLog("[RecordingFileService] 写盘失败: %@", error.localizedDescription)
             }
@@ -108,19 +114,32 @@ final class RecordingFileService: ObservableObject {
     private func makeOutputURL() -> URL {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyyMMdd_HHmmss"
-        let name = "Recording_\(formatter.string(from: Date())).m4a"
+        let name = "Recording_\(formatter.string(from: Date())).wav"
         return storageDirectory.appendingPathComponent(name)
     }
 
     private static func durationOf(url: URL) -> TimeInterval {
         guard let audioFile = try? AVAudioFile(forReading: url) else { return 0 }
-        return Double(audioFile.length) / audioFile.processingFormat.sampleRate
+        let sampleRate = audioFile.processingFormat.sampleRate
+        guard sampleRate > 0 else { return 0 }
+        return Double(audioFile.length) / sampleRate
     }
 
-    // MARK: 写盘（nonisolated，可在任意线程调用）
+    // MARK: 写盘（nonisolated，在后台线程调用）
 
-    /// 将 Float32 PCM 样本写入 M4A（AAC 编码），返回实际时长（秒）。
-    private nonisolated static func writeM4A(samples: [Float], sampleRate: Double, to outputURL: URL) throws -> TimeInterval {
+    /// 将 Float32 PCM 样本写入 WAV 文件，返回实际时长（秒）。
+    /// WAV 格式直写，无需 AAC 编码，兼容所有 macOS 版本。
+    private nonisolated static func writeWAV(samples: [Float], sampleRate: Double, to outputURL: URL) throws -> TimeInterval {
+        let wavSettings: [String: Any] = [
+            AVFormatIDKey: kAudioFormatLinearPCM,
+            AVSampleRateKey: sampleRate,
+            AVNumberOfChannelsKey: 1,
+            AVLinearPCMBitDepthKey: 32,
+            AVLinearPCMIsFloatKey: true,
+            AVLinearPCMIsBigEndianKey: false,
+            AVLinearPCMIsNonInterleaved: false
+        ]
+
         let pcmFormat = AVAudioFormat(
             commonFormat: .pcmFormatFloat32,
             sampleRate: sampleRate,
@@ -128,28 +147,14 @@ final class RecordingFileService: ObservableObject {
             interleaved: false
         )!
 
-        let aacSettings: [String: Any] = [
-            AVFormatIDKey: kAudioFormatMPEG4AAC,
-            AVSampleRateKey: sampleRate,
-            AVNumberOfChannelsKey: 1,
-            AVEncoderBitRateKey: 96_000
-        ]
+        let audioFile = try AVAudioFile(forWriting: outputURL, settings: wavSettings)
 
-        let audioFile = try AVAudioFile(
-            forWriting: outputURL,
-            settings: aacSettings,
-            commonFormat: .pcmFormatFloat32,
-            interleaved: false
-        )
-
-        // 分块写入避免单次申请超大 PCM buffer
         let chunkSize = 65_536
         var offset = 0
 
         while offset < samples.count {
             let end = min(offset + chunkSize, samples.count)
             let chunkCount = end - offset
-            let chunk = Array(samples[offset..<end])
 
             guard let buffer = AVAudioPCMBuffer(
                 pcmFormat: pcmFormat,
@@ -158,8 +163,8 @@ final class RecordingFileService: ObservableObject {
 
             buffer.frameLength = AVAudioFrameCount(chunkCount)
             if let channelData = buffer.floatChannelData {
-                chunk.withUnsafeBufferPointer { ptr in
-                    channelData[0].update(from: ptr.baseAddress!, count: chunkCount)
+                samples.withUnsafeBufferPointer { ptr in
+                    channelData[0].update(from: ptr.baseAddress! + offset, count: chunkCount)
                 }
             }
 
