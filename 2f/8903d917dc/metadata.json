@@ -1,0 +1,45 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "2f8903d917dc",
+  "strategy": "manual-commit",
+  "branch": "feat/whisper-model-selection-and-fixes",
+  "checkpoints_count": 11,
+  "files_touched": [
+    "Sources/VoicePepper/App/AppDelegate.swift",
+    "Sources/VoicePepper/App/VoicePepperApp.swift",
+    "Sources/VoicePepper/Models/AppState.swift",
+    "Sources/VoicePepper/Services/TranscriptionService.swift",
+    "Sources/VoicePepper/Services/WhisperContext.swift",
+    "Sources/VoicePepper/Services/WhisperModelManager.swift",
+    "Sources/VoicePepper/UI/PreferencesView.swift",
+    "Sources/VoicePepper/UI/StatusBarManager.swift",
+    "Sources/VoicePepper/UI/TranscriptionPopoverView.swift",
+    "docs/solutions/best-practices/whisper-model-selection-rationale-2026-04-11.md",
+    "docs/solutions/logic-errors/whisper-chinese-simplified-initial-prompt.md",
+    "docs/solutions/ui-bugs/accessory-policy-preferences-window-menu-fix.md",
+    "openspec/changes/archive/2026-04-12-whisper-model-selection/.openspec.yaml",
+    "openspec/changes/archive/2026-04-12-whisper-model-selection/design.md",
+    "openspec/changes/archive/2026-04-12-whisper-model-selection/proposal.md",
+    "openspec/changes/archive/2026-04-12-whisper-model-selection/specs/model-hot-switch/spec.md",
+    "openspec/changes/archive/2026-04-12-whisper-model-selection/specs/whisper-model-catalog/spec.md",
+    "openspec/changes/archive/2026-04-12-whisper-model-selection/tasks.md",
+    "openspec/specs/model-hot-switch/spec.md",
+    "openspec/specs/whisper-model-catalog/spec.md",
+    "tests/e2e_large_v3_q5.py"
+  ],
+  "sessions": [
+    {
+      "metadata": "/2f/8903d917dc/0/metadata.json",
+      "transcript": "/2f/8903d917dc/0/full.jsonl",
+      "content_hash": "/2f/8903d917dc/0/content_hash.txt",
+      "prompt": "/2f/8903d917dc/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 1188,
+    "cache_creation_tokens": 1057088,
+    "cache_read_tokens": 22355871,
+    "output_tokens": 104844,
+    "api_call_count": 258
+  }
+}

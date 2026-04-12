@@ -1,0 +1,56 @@
+/opsx:propose 当前的whisper模型尺寸过小, 导致转录效果不理想, 测试更大尺寸的模型, 模型切换要支持用户在界面上切换, 如果检测到本地没有对应的模型, 触发自动下载
+
+---
+
+我的笔记本是m4芯片,内存32G, 推荐一款适合的模型尺寸(含量化版本)
+
+---
+
+ggml-large-v3-q5_0.bin, ggml-large-v3-turbo-q5_0.bin 都下载, 允许在界面选择和切换
+
+---
+
+在启动一个subagent后台执行ggml-large-v3-q5_0.bin, ggml-large-v3-turbo-q5_0.bin模型的下载; 主agent执行/opsx:apply
+
+---
+
+端到端测试: 使用largeV3Q5_0转录实时录音
+
+---
+
+杀掉所有的进程, 重新验证
+
+---
+
+➜  VoicePepper git:(main) ✗ pgrep -la VoicePepper 2>&1
+27592 VoicePepper
+75467 VoicePepper
+81787 VoicePepper
+
+---
+
+为什么我看不到切换模型的选项? [Image #2]
+
+---
+
+怎么确保新启动应用时必须退出老应用呢?
+
+---
+
+继续
+
+---
+
+偏好设置点击没反应, 应用退出按钮灰色不可点击; 模型切换页面还是看不到
+
+---
+
+[Image #1] 现在转录出来的都是中文繁体, 应该转录生成中文简体
+
+---
+
+/compound-engineering:ce-compound
+
+---
+
+/opsx:archive
