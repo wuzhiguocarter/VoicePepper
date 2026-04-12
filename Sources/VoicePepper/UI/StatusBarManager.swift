@@ -44,11 +44,47 @@ final class StatusBarManager {
         guard let button = statusItem.button else { return }
         button.image = NSImage(systemSymbolName: "mic", accessibilityDescription: "VoicePepper")
         button.imagePosition = .imageOnly
-        button.action = #selector(togglePopover)
+        button.action = #selector(handleClick)
+        button.sendAction(on: [.leftMouseUp, .rightMouseUp])
         button.target = self
         button.setAccessibilityIdentifier("statusBarMicButton")
 
         updateIcon(isRecording: false)
+    }
+
+    // MARK: Click Handling
+
+    @objc private func handleClick() {
+        guard let event = NSApp.currentEvent else { return }
+        if event.type == .rightMouseUp {
+            showContextMenu()
+        } else {
+            togglePopover()
+        }
+    }
+
+    private func showContextMenu() {
+        let menu = NSMenu()
+
+        let prefsItem = NSMenuItem(title: "偏好设置…", action: #selector(openPreferences), keyEquivalent: ",")
+        prefsItem.target = self
+        menu.addItem(prefsItem)
+
+        menu.addItem(.separator())
+
+        // target = NSApp：直接发给 NSApplication，避免因 target=self 导致按钮 gray out
+        let quitItem = NSMenuItem(title: "退出 VoicePepper", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        quitItem.target = NSApp
+        menu.addItem(quitItem)
+
+        statusItem.menu = menu
+        statusItem.button?.performClick(nil)
+        // 用后清除，保持左键单击正常
+        DispatchQueue.main.async { [weak self] in self?.statusItem.menu = nil }
+    }
+
+    @objc private func openPreferences() {
+        appState.openPreferencesAction?()
     }
 
     private func observeState() {
@@ -85,6 +121,8 @@ final class StatusBarManager {
             button.contentTintColor = nil
         }
     }
+
+    // MARK: Popover Toggle
 
     // MARK: Popover Toggle
 

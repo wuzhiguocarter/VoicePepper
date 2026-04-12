@@ -1,4 +1,5 @@
 import AppKit
+import SwiftUI
 import Combine
 import KeyboardShortcuts
 
@@ -15,14 +16,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // Core services (Task 2.4 - DI via AppDelegate ownership)
     let appState = AppState()
+    /// 提升到顶层，供 VoicePepperApp Scene 在 applicationDidFinishLaunching 前安全访问
+    let modelManager = WhisperModelManager()
     private var statusBarManager: StatusBarManager?
     private var audioCaptureService: AudioCaptureService?
     private var transcriptionService: TranscriptionService?
     private var accessibilityMonitor: AccessibilityMonitor?
 
     private var cancellables = Set<AnyCancellable>()
+    /// 手动管理偏好设置窗口，避免 .accessory app 中 showSettingsWindow: 不可靠的问题
+    private var preferencesWindow: NSWindow?
 
     // MARK: Lifecycle
+
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        terminatePreviousInstances()
+    }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Configure as agent (LSUIElement=YES in Info.plist handles dock hiding)
@@ -39,13 +48,41 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillTerminate(_ notification: Notification) {
         audioCaptureService?.stop()
         transcriptionService?.stop()
+        // ggml-metal 析构链在 exit() 路径上会触发 GGML_ASSERT 并卡入 UE 状态；
+        // _exit() 跳过 C++ 析构，由内核直接回收所有 GPU/文件资源，安全可靠。
+        _exit(0)
+    }
+
+    // MARK: Single Instance
+
+    /// 终止同名旧实例，确保同一时刻只有一个 VoicePepper 运行。
+    /// 策略：先发 SIGTERM 优雅退出，2 秒后若仍存在则 SIGKILL 强杀。
+    private func terminatePreviousInstances() {
+        let myPID = ProcessInfo.processInfo.processIdentifier
+        let myName = ProcessInfo.processInfo.processName
+
+        let stale = NSWorkspace.shared.runningApplications.filter {
+            $0.processIdentifier != myPID && $0.localizedName == myName
+        }
+
+        guard !stale.isEmpty else { return }
+
+        for app in stale {
+            let pid = app.processIdentifier
+            NSLog("[AppDelegate] 终止旧实例 PID=\(pid)")
+            // 直接 SIGKILL：跳过 ggml-metal 析构路径，避免旧实例卡入 UE 状态
+            kill(pid, SIGKILL)
+        }
+
+        // 等待 OS 回收旧实例资源（status bar 槽位、Metal 上下文等）
+        Thread.sleep(forTimeInterval: 1.0)
     }
 
     // MARK: Setup
 
     private func setupServices() {
         let audioService = AudioCaptureService(appState: appState)
-        let transcriptionSvc = TranscriptionService(appState: appState)
+        let transcriptionSvc = TranscriptionService(appState: appState, modelManager: modelManager)
 
         audioCaptureService = audioService
         transcriptionService = transcriptionSvc
@@ -56,6 +93,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // E2E 测试钩子：允许 SwiftUI 按钮通过 AppState 触发录音
         appState.toggleRecordingAction = { [weak self] in
             self?.handleToggleRecording()
+        }
+
+        // 偏好设置入口：手动创建 NSWindow，规避 .accessory app 中 showSettingsWindow: 不可靠
+        appState.openPreferencesAction = { [weak self] in
+            self?.openPreferencesWindow()
         }
 
         // Connect audio → transcription
@@ -144,6 +186,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func stopRecording() {
         audioCaptureService?.stop()
         appState.stopRecording()
+    }
+
+    // MARK: Preferences Window
+
+    func openPreferencesWindow() {
+        // 若窗口已存在且可见，直接置前
+        if let window = preferencesWindow, window.isVisible {
+            window.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+
+        let view = PreferencesView()
+            .environmentObject(appState)
+            .environmentObject(modelManager)
+
+        let vc = NSHostingController(rootView: view)
+        let window = NSWindow(contentViewController: vc)
+        window.title = "偏好设置"
+        window.styleMask = [.titled, .closable, .miniaturizable]
+        window.setContentSize(NSSize(width: 420, height: 520))
+        window.center()
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+
+        preferencesWindow = window
     }
 
     // MARK: Permission Prompts

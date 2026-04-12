@@ -53,6 +53,17 @@ struct TranscriptionPopoverView: View {
 
     private var actionBar: some View {
         HStack {
+            // 偏好设置入口
+            Button {
+                appState.openPreferencesAction?()
+            } label: {
+                Image(systemName: "gearshape")
+                    .font(.caption)
+            }
+            .buttonStyle(.borderless)
+            .help("偏好设置 (模型选择、快捷键…)")
+            .accessibilityIdentifier("settingsButton")
+
             // Clear session (Task 6.7)
             Button(role: .destructive) {
                 showClearConfirm = true

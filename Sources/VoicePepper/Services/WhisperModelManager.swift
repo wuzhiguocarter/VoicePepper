@@ -11,11 +11,18 @@ enum ModelLoadState {
     case failed(Error)
 }
 
-// MARK: - Whisper Model Manager (Tasks 5.1 & 5.2)
+// MARK: - Whisper Model Manager
 
-final class WhisperModelManager: NSObject {
+final class WhisperModelManager: NSObject, ObservableObject {
 
+    /// 向后兼容：现有 TranscriptionService 订阅此 publisher
     let statePublisher = CurrentValueSubject<ModelLoadState, Never>(.idle)
+
+    /// 当前已加载到内存的模型
+    @Published private(set) var activeModel: WhisperModel?
+
+    /// 每个模型的独立下载/加载状态，供 UI 逐行展示
+    @Published private(set) var modelStates: [WhisperModel: ModelLoadState] = [:]
 
     private(set) var whisperContext: WhisperContext?
 
@@ -25,9 +32,30 @@ final class WhisperModelManager: NSObject {
         return appSupport.appendingPathComponent("VoicePepper/models", isDirectory: true)
     }
 
+    // MARK: - Public: Local Status
+
+    /// 检测模型文件是否已下载到本地
+    func isModelDownloaded(_ model: WhisperModel) -> Bool {
+        let path = Self.modelsDirectory.appendingPathComponent(model.filename).path
+        return FileManager.default.fileExists(atPath: path)
+    }
+
+    // MARK: - Public: Switch Model
+
+    /// 卸载旧模型上下文，加载新模型（下载或直接加载）
+    func switchModel(_ model: WhisperModel) async {
+        NSLog("[WhisperModelManager] switchModel: \(model.rawValue)")
+
+        // 释放旧上下文（ARC 触发 C 层 deinit）
+        whisperContext = nil
+        activeModel = nil
+
+        await ensureModel(model)
+    }
+
     // MARK: - Load or Download
 
-    /// Check local model exists; if not, download it first, then load.
+    /// 检测本地是否存在，不存在则先下载再加载
     func ensureModel(_ model: WhisperModel) async {
         let localPath = Self.modelsDirectory.appendingPathComponent(model.filename)
         NSLog("[WhisperModelManager] ensureModel: \(model.rawValue), path=\(localPath.path)")
@@ -35,7 +63,7 @@ final class WhisperModelManager: NSObject {
         if FileManager.default.fileExists(atPath: localPath.path) {
             let fileSize = (try? FileManager.default.attributesOfItem(atPath: localPath.path)[.size] as? Int) ?? 0
             NSLog("[WhisperModelManager] 本地模型存在，大小=\(fileSize) bytes，开始加载")
-            await loadModel(at: localPath)
+            await loadModel(model, at: localPath)
         } else {
             NSLog("[WhisperModelManager] 本地模型不存在，开始下载 url=\(model.downloadURL)")
             await downloadAndLoad(model: model, destination: localPath)
@@ -44,9 +72,9 @@ final class WhisperModelManager: NSObject {
 
     // MARK: - Private: Load
 
-    private func loadModel(at url: URL) async {
+    private func loadModel(_ model: WhisperModel, at url: URL) async {
         NSLog("[WhisperModelManager] loadModel 开始: \(url.lastPathComponent)")
-        statePublisher.send(.loading)
+        sendState(.loading, for: model)
 
         do {
             let t0 = Date()
@@ -54,30 +82,28 @@ final class WhisperModelManager: NSObject {
             let elapsed = Date().timeIntervalSince(t0)
             self.whisperContext = context
             NSLog("[WhisperModelManager] 模型加载成功，耗时 %.2fs", elapsed)
-            statePublisher.send(.ready)
+            sendState(.ready, for: model)
+            await MainActor.run { activeModel = model }
         } catch {
             NSLog("[WhisperModelManager] 模型加载失败: \(error)")
-            statePublisher.send(.failed(error))
+            sendState(.failed(error), for: model)
         }
     }
 
-    // MARK: - Private: Download (Task 5.2)
+    // MARK: - Private: Download
 
     private func downloadAndLoad(model: WhisperModel, destination: URL) async {
-        // Create directory if needed
         try? FileManager.default.createDirectory(
             at: Self.modelsDirectory,
             withIntermediateDirectories: true
         )
 
-        statePublisher.send(.downloading(progress: 0))
+        sendState(.downloading(progress: 0), for: model)
 
         do {
-            let (localTempURL, response) = try await URLSession.shared.download(from: model.downloadURL) { bytesWritten, totalBytesWritten, totalExpected in
+            let (localTempURL, response) = try await URLSession.shared.download(from: model.downloadURL) { [weak self] _, totalBytesWritten, totalExpected in
                 let progress = totalExpected > 0 ? Double(totalBytesWritten) / Double(totalExpected) : 0
-                DispatchQueue.main.async { [weak self] in
-                    self?.statePublisher.send(.downloading(progress: progress))
-                }
+                self?.sendState(.downloading(progress: progress), for: model)
             }
 
             guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
@@ -85,11 +111,21 @@ final class WhisperModelManager: NSObject {
             }
 
             try FileManager.default.moveItem(at: localTempURL, to: destination)
-            await loadModel(at: destination)
+            await loadModel(model, at: destination)
 
         } catch {
-            statePublisher.send(.failed(error))
+            sendState(.failed(error), for: model)
         }
+    }
+
+    // MARK: - Private: State Broadcast
+
+    /// 同时更新 modelStates 字典（per-model UI）和向后兼容的 statePublisher
+    private func sendState(_ state: ModelLoadState, for model: WhisperModel) {
+        DispatchQueue.main.async { [weak self] in
+            self?.modelStates[model] = state
+        }
+        statePublisher.send(state)
     }
 }
 
