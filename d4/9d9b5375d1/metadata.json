@@ -1,0 +1,23 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "d49d9b5375d1",
+  "strategy": "manual-commit",
+  "branch": "feature/recording-history-player",
+  "checkpoints_count": 2,
+  "files_touched": null,
+  "sessions": [
+    {
+      "metadata": "/d4/9d9b5375d1/0/metadata.json",
+      "transcript": "/d4/9d9b5375d1/0/full.jsonl",
+      "content_hash": "/d4/9d9b5375d1/0/content_hash.txt",
+      "prompt": "/d4/9d9b5375d1/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 176,
+    "cache_creation_tokens": 376463,
+    "cache_read_tokens": 12465130,
+    "output_tokens": 93907,
+    "api_call_count": 151
+  }
+}
