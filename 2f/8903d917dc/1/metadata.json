@@ -1,0 +1,45 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "2f8903d917dc",
+  "session_id": "506e48c5-d9ac-4814-b126-52bcdf360d47",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-12T00:54:38.278567Z",
+  "branch": "feat/whisper-model-selection-and-fixes",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "Sources/VoicePepper/Models/AppState.swift",
+    "Sources/VoicePepper/App/AppDelegate.swift",
+    "Sources/VoicePepper/App/VoicePepperApp.swift",
+    "Sources/VoicePepper/UI/StatusBarManager.swift",
+    "Sources/VoicePepper/Services/WhisperContext.swift",
+    "Sources/VoicePepper/Services/WhisperModelManager.swift",
+    "Sources/VoicePepper/Services/TranscriptionService.swift",
+    "Sources/VoicePepper/UI/TranscriptionPopoverView.swift",
+    "Sources/VoicePepper/UI/PreferencesView.swift"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-sonnet-4-6",
+  "turn_id": "9a60e864e22c",
+  "token_usage": {
+    "input_tokens": 9233,
+    "cache_creation_tokens": 1260804,
+    "cache_read_tokens": 41118043,
+    "output_tokens": 203727,
+    "api_call_count": 421
+  },
+  "session_metrics": {
+    "turn_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-12T00:54:37.176419Z",
+    "agent_lines": 410,
+    "agent_removed": 56,
+    "human_added": 893,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 1303,
+    "total_lines_changed": 1359,
+    "agent_percentage": 34.28991905813098,
+    "metric_version": 2
+  }
+}
