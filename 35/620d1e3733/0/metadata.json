@@ -1,0 +1,42 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "35620d1e3733",
+  "session_id": "2f551f9e-1f48-4a8b-a206-2fd4412dccba",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-12T15:50:03.668883Z",
+  "branch": "feature/recording-history-player",
+  "checkpoints_count": 2,
+  "files_touched": [
+    ".gitignore",
+    "docs/solutions/best-practices/macos-ax-e2e-testing-swiftui-2026-04-11.md",
+    "docs/solutions/developer-experience/osascript-python-subprocess-global-hotkey.md",
+    "docs/solutions/integration-issues/avfoundation-wav-vs-m4a-writing.md"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-sonnet-4-6",
+  "turn_id": "46d7f3caec55",
+  "checkpoint_transcript_start": 1127,
+  "transcript_lines_at_start": 1127,
+  "token_usage": {
+    "input_tokens": 24,
+    "cache_creation_tokens": 31132,
+    "cache_read_tokens": 2396525,
+    "output_tokens": 14902,
+    "api_call_count": 22
+  },
+  "session_metrics": {
+    "turn_count": 3
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-12T15:50:03.032785Z",
+    "agent_lines": 211,
+    "agent_removed": 1,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 211,
+    "total_lines_changed": 212,
+    "agent_percentage": 100,
+    "metric_version": 2
+  }
+}
