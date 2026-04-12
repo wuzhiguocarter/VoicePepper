@@ -67,6 +67,12 @@ final class WhisperContext {
         params.n_threads = Int32(ProcessInfo.processInfo.processorCount)
         #endif
 
+        // 用简体中文 initial_prompt 引导模型优先输出简体，
+        // 避免 whisper 对中文音频默认输出繁体字。
+        // NSString 生命周期覆盖整个 whisper_full 调用，utf8String 指针安全。
+        let promptNS = "以下是普通话的转录，请使用简体中文。" as NSString
+        params.initial_prompt = promptNS.utf8String
+
         let whisperRet = samples.withUnsafeBufferPointer { ptr in
             whisper_full(ctx, params, ptr.baseAddress, Int32(samples.count))
         }

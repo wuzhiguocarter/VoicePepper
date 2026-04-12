@@ -54,11 +54,20 @@ final class AppState: ObservableObject {
     @Published var accessibilityPermissionGranted: Bool = false
 
     // Preferences
-    @Published var selectedModel: WhisperModel = .tiny
+    @Published var selectedModel: WhisperModel {
+        didSet { UserDefaults.standard.set(selectedModel.rawValue, forKey: "selectedModel") }
+    }
     @Published var vadSilenceThresholdMs: Int = 500
 
     // E2E 测试钩子：由 AppDelegate 注入，供 SwiftUI 按钮调用
     var toggleRecordingAction: (() -> Void)?
+    // 偏好设置入口：由 AppDelegate 注入，StatusBarManager 和 TranscriptionPopoverView 统一调用
+    var openPreferencesAction: (() -> Void)?
+
+    init() {
+        let stored = UserDefaults.standard.string(forKey: "selectedModel")
+        selectedModel = stored.flatMap(WhisperModel.init(rawValue:)) ?? .tiny
+    }
 
     // MARK: Computed
 
@@ -93,17 +102,35 @@ final class AppState: ObservableObject {
 // MARK: - Whisper Model
 
 enum WhisperModel: String, CaseIterable, Identifiable {
-    case tiny  = "ggml-tiny"
-    case base  = "ggml-base"
-    case small = "ggml-small"
+    case tiny             = "ggml-tiny"
+    case base             = "ggml-base"
+    case small            = "ggml-small"
+    case medium           = "ggml-medium"
+    case largeV2          = "ggml-large-v2"
+    case largeV3          = "ggml-large-v3"
+    case largeV3Q5_0      = "ggml-large-v3-q5_0"
+    case largeV3TurboQ5_0 = "ggml-large-v3-turbo-q5_0"
 
     var id: String { rawValue }
 
     var displayName: String {
         switch self {
-        case .tiny:  return "Tiny (~75 MB)"
-        case .base:  return "Base (~142 MB)"
-        case .small: return "Small (~244 MB)"
+        case .tiny:             return "Tiny (~75 MB)"
+        case .base:             return "Base (~142 MB)"
+        case .small:            return "Small (~244 MB)"
+        case .medium:           return "Medium (~769 MB)"
+        case .largeV2:          return "Large v2 (~2.87 GB)"
+        case .largeV3:          return "Large v3 (~2.87 GB)"
+        case .largeV3Q5_0:      return "Large v3 Q5_0 (~1.1 GB)"
+        case .largeV3TurboQ5_0: return "Large v3 Turbo Q5_0 (~0.6 GB)"
+        }
+    }
+
+    /// 量化模型标记，在 UI 中显示"推荐"标签
+    var isRecommended: Bool {
+        switch self {
+        case .largeV3Q5_0, .largeV3TurboQ5_0: return true
+        default: return false
         }
     }
 

@@ -1,9 +1,10 @@
 import Foundation
 import Combine
 
-// MARK: - Transcription Service (Tasks 5.5, 5.6)
+// MARK: - Transcription Service
 // Receives AudioSegments, queues them for serial whisper.cpp transcription,
 // and publishes results back to AppState.
+// Subscribes to appState.$selectedModel for runtime hot-switching.
 
 final class TranscriptionService {
 
@@ -12,29 +13,33 @@ final class TranscriptionService {
     let modelErrorPublisher = PassthroughSubject<String, Never>()
 
     private let appState: AppState
-    private let modelManager = WhisperModelManager()
+    let modelManager: WhisperModelManager
 
-    // Task 5.6 - serial queue: prevents concurrent whisper inference
+    // Serial queue: prevents concurrent whisper inference
     private let transcriptionQueue = OperationQueue()
 
     private var cancellables = Set<AnyCancellable>()
 
-    init(appState: AppState) {
+    init(appState: AppState, modelManager: WhisperModelManager) {
         self.appState = appState
+        self.modelManager = modelManager
 
-        // Serial queue
         transcriptionQueue.maxConcurrentOperationCount = 1
         transcriptionQueue.qualityOfService = .userInitiated
 
         observeModelState()
+        // 订阅需在 MainActor 上（appState 是 @MainActor 隔离）
+        Task { @MainActor [weak self] in self?.observeSelectedModel() }
     }
 
     // MARK: - Lifecycle
 
     func start() {
-        Task { @MainActor [weak self] in
+        // 初始加载由 selectedModel 订阅驱动（observeSelectedModel dropFirst 已去掉），
+        // 此处保留向后兼容：首次 start() 触发初始模型加载
+        Task { [weak self] in
             guard let self else { return }
-            let model = self.appState.selectedModel
+            let model = await MainActor.run { self.appState.selectedModel }
             NSLog("[TranscriptionService] start() 调用，加载模型: %@", model.rawValue)
             await self.modelManager.ensureModel(model)
         }
@@ -47,7 +52,11 @@ final class TranscriptionService {
     // MARK: - Enqueue Segment
 
     func enqueue(_ segment: AudioSegment) {
-        guard modelManager.whisperContext != nil else { return }
+        // switchModel 会先将 whisperContext 置 nil，切换期间此 guard 自然丢弃入队
+        guard modelManager.whisperContext != nil else {
+            NSLog("[TranscriptionService] 模型切换中，丢弃音频段")
+            return
+        }
 
         let op = TranscriptionOperation(
             segment: segment,
@@ -79,7 +88,7 @@ final class TranscriptionService {
         }
     }
 
-    // MARK: - Model State
+    // MARK: - Model State Observation
 
     private func observeModelState() {
         modelManager.statePublisher
@@ -90,8 +99,32 @@ final class TranscriptionService {
                 case .failed(let error):
                     self?.modelReadyPublisher.send(false)
                     self?.modelErrorPublisher.send(error.localizedDescription)
+                    // 下载/加载失败时回退 selectedModel 到上一个成功的 activeModel
+                    Task { @MainActor [weak self] in
+                        guard let self,
+                              let fallback = self.modelManager.activeModel else { return }
+                        NSLog("[TranscriptionService] 模型加载失败，回退到 %@", fallback.rawValue)
+                        self.appState.selectedModel = fallback
+                    }
                 default:
                     break
+                }
+            }
+            .store(in: &cancellables)
+    }
+
+    /// 订阅 selectedModel 变化，触发热切换（必须在 @MainActor 上调用）
+    @MainActor
+    private func observeSelectedModel() {
+        appState.$selectedModel
+            .removeDuplicates()
+            .dropFirst() // 跳过初始值，避免与 start() 重复加载
+            .sink { [weak self] newModel in
+                guard let self else { return }
+                NSLog("[TranscriptionService] selectedModel 变化，切换到: %@", newModel.rawValue)
+                self.transcriptionQueue.cancelAllOperations()
+                Task { [weak self] in
+                    await self?.modelManager.switchModel(newModel)
                 }
             }
             .store(in: &cancellables)
