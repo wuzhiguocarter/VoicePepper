@@ -9,6 +9,12 @@ struct TranscriptionPopoverView: View {
 
     @State private var showClearConfirm = false
     @State private var showCopiedFeedback = false
+    @State private var selectedTab: PopoverTab = .transcription
+
+    enum PopoverTab: String, CaseIterable {
+        case transcription = "转录"
+        case history = "历史录音"
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -21,10 +27,43 @@ struct TranscriptionPopoverView: View {
 
             Divider()
 
-            // Middle: Transcript list (scrollable) - Task 6.3
-            TranscriptionListView()
-                .environmentObject(appState)
-                .frame(minHeight: 300)
+            // Tab 切换
+            Picker("", selection: $selectedTab) {
+                ForEach(PopoverTab.allCases, id: \.self) { tab in
+                    Text(tab.rawValue).tag(tab)
+                }
+            }
+            .pickerStyle(.segmented)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+
+            Divider()
+
+            // 内容区
+            Group {
+                if selectedTab == .transcription {
+                    // Middle: Transcript list (scrollable) - Task 6.3
+                    TranscriptionListView()
+                        .environmentObject(appState)
+                        .frame(minHeight: 280)
+                } else {
+                    // 历史录音列表
+                    if let service = appState.recordingFileService {
+                        RecordingHistoryView(
+                            service: service,
+                            currentlyPlayingId: Binding(
+                                get: { appState.currentlyPlayingId },
+                                set: { appState.currentlyPlayingId = $0 }
+                            )
+                        )
+                        .frame(minHeight: 280)
+                    } else {
+                        Text("录音服务未就绪")
+                            .foregroundColor(.secondary)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    }
+                }
+            }
 
             Divider()
 

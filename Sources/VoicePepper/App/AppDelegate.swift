@@ -22,6 +22,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var audioCaptureService: AudioCaptureService?
     private var transcriptionService: TranscriptionService?
     private var accessibilityMonitor: AccessibilityMonitor?
+    private let recordingFileService = RecordingFileService()
 
     private var cancellables = Set<AnyCancellable>()
     /// 手动管理偏好设置窗口，避免 .accessory app 中 showSettingsWindow: 不可靠的问题
@@ -87,6 +88,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         audioCaptureService = audioService
         transcriptionService = transcriptionSvc
 
+        // 注入 RecordingFileService 到 AppState
+        appState.recordingFileService = recordingFileService
+        recordingFileService.loadRecordings()
+
         // Start model loading immediately on launch
         transcriptionSvc.start()
 
@@ -104,6 +109,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         audioService.audioSegmentPublisher
             .sink { [weak transcriptionSvc] segment in
                 transcriptionSvc?.enqueue(segment)
+            }
+            .store(in: &cancellables)
+
+        // 录音会话结束 → 持久化整段录音（所有 VAD 段已合并）
+        audioService.sessionEndPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] samples in
+                self?.recordingFileService.save(samples: samples)
             }
             .store(in: &cancellables)
     }
