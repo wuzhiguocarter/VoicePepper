@@ -117,7 +117,9 @@ Button("") {
 - `CGEventPost(kCGHIDEventTap, ...)` — 无效
 - `CGEventPost(kCGAnnotatedSessionEventTap, ...)` — 无效
 - `CGEventPostToPid(pid, ...)` — 无效
-- `osascript` + System Events — 会触发 Automation 权限弹窗，阻塞 ~5 秒
+- `osascript` + System Events — 会触发 Automation 权限弹窗，阻塞 ~5 秒；
+  即使权限已授予，从 `arch -x86_64 python3`（Rosetta 2）进程多次调用时，
+  **第二次 keystroke 常被静默丢弃**（参见 `docs/solutions/developer-experience/osascript-python-subprocess-global-hotkey.md`）
 
 **正确模式：在 SwiftUI 中添加隐藏的 AX 可触发测试按钮**
 
@@ -295,6 +297,7 @@ Circle()
 ## Related
 
 - `docs/solutions/developer-experience/macos-native-ui-automation-mcp-2026-04-11.md` — macos-ui-automation-mcp 工具安装与注册（本文模式的基础设施层）
+- `docs/solutions/developer-experience/osascript-python-subprocess-global-hotkey.md` — osascript 多次调用在 x86_64 Python 中的可靠性问题与修复（陷阱 4 扩展案例）
 - `docs/solutions/integration-issues/whisper-cpp-ggml-backend-integration-swift-2026-04-11.md` — 同一 VoicePepper 项目的 whisper.cpp 集成 Bug
 - [KeyboardShortcuts 框架](https://github.com/nicklockwood/KeyboardShortcuts) — CGEventTap 实现，是陷阱 4 的根因
 - `.claude/skills/swiftui-expert-skill/references/accessibility-patterns.md` — SwiftUI AX 语义层基础

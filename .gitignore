@@ -45,3 +45,4 @@ Icon
 *.pem
 *.key
 Secrets.swift
+test-results/
