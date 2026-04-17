@@ -1,0 +1,46 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "ce6bc9a20207",
+  "session_id": "7303c25b-cf83-449d-b908-dda2aaddcf85",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-17T17:17:25.569059Z",
+  "branch": "feature/bluetooth-recorder-channel",
+  "checkpoints_count": 6,
+  "files_touched": [
+    "Package.swift",
+    "Sources/COpus/COpus.c",
+    "Sources/COpus/include/COpus.h",
+    "Sources/VoicePepper/Services/BLE/BLERecorderService.swift",
+    "Sources/VoicePepper/Services/BLE/OpusDecoder.swift",
+    "openspec/specs/ble-device-management/spec.md",
+    "openspec/specs/ble-protocol/spec.md",
+    "openspec/specs/ble-realtime-transcription/spec.md",
+    "openspec/specs/recording-source-switch/spec.md",
+    "openspec/specs/recording/spec.md"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-sonnet-4-6",
+  "turn_id": "3910885a195a",
+  "token_usage": {
+    "input_tokens": 350,
+    "cache_creation_tokens": 328331,
+    "cache_read_tokens": 38113918,
+    "output_tokens": 132929,
+    "api_call_count": 221
+  },
+  "session_metrics": {
+    "turn_count": 5
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-17T17:17:24.895781Z",
+    "agent_lines": 414,
+    "agent_removed": 1,
+    "human_added": 176,
+    "human_modified": 6,
+    "human_removed": 0,
+    "total_committed": 596,
+    "total_lines_changed": 597,
+    "agent_percentage": 69.5142378559464,
+    "metric_version": 2
+  }
+}
