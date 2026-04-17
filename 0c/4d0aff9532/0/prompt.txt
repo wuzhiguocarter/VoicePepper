@@ -72,3 +72,7 @@
 ---
 
 /compound-engineering:ce-compound
+
+---
+
+/commit-commands:commit
