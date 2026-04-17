@@ -58,6 +58,7 @@ let package = Package(
                 .linkedFramework("AppKit"),
                 .linkedFramework("Combine"),
                 .linkedFramework("CoreAudio"),
+                .linkedFramework("CoreBluetooth"),
             ]
         ),
     ]

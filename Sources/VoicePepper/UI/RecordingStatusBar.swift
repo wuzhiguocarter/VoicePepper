@@ -6,9 +6,6 @@ import SwiftUI
 struct RecordingStatusBar: View {
     @EnvironmentObject var appState: AppState
 
-    @State private var elapsed: TimeInterval = 0
-    private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
-
     var body: some View {
         HStack(spacing: 12) {
             // Status indicator dot
@@ -19,15 +16,13 @@ struct RecordingStatusBar: View {
                 .accessibilityElement(children: .ignore)
                 .accessibilityIdentifier(appState.recordingState.isRecording ? "recordingIndicatorActive" : "recordingIndicatorIdle")
 
-            // Timer display
+            // Timer display — 用 TimelineView 每秒刷新，避免 Timer.publish 在频繁 body 求值时被反复重建
             if appState.recordingState.isRecording {
-                Text(formatDuration(elapsed))
-                    .font(.system(.caption, design: .monospaced))
-                    .foregroundColor(.secondary)
-                    .onReceive(timer) { _ in
-                        elapsed = appState.recordingDuration
-                    }
-                    .onAppear { elapsed = 0 }
+                TimelineView(.periodic(from: .now, by: 1)) { _ in
+                    Text(formatDuration(appState.recordingDuration))
+                        .font(.system(.caption, design: .monospaced))
+                        .foregroundColor(.secondary)
+                }
             } else {
                 Text(appState.isModelLoaded ? "就绪" : "加载模型中...")
                     .font(.caption)

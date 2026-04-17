@@ -1,6 +1,22 @@
 import Foundation
 import Combine
 
+// MARK: - Recording Source
+
+enum RecordingSource: String, CaseIterable, Identifiable {
+    case microphone = "microphone"
+    case bluetoothRecorder = "bluetoothRecorder"
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .microphone: return "麦克风"
+        case .bluetoothRecorder: return "蓝牙录音笔"
+        }
+    }
+}
+
 // MARK: - Recording State
 
 enum RecordingState: Equatable {
@@ -53,6 +69,14 @@ final class AppState: ObservableObject {
     @Published var micPermissionDenied: Bool = false
     @Published var accessibilityPermissionGranted: Bool = false
 
+    // BLE 录音笔
+    @Published var recordingSource: RecordingSource {
+        didSet { UserDefaults.standard.set(recordingSource.rawValue, forKey: "recordingSource") }
+    }
+    @Published var bleConnectionState: BLEConnectionState = .disconnected
+    @Published var bleBatteryLevel: Int? = nil      // 0-100, 110=充电中
+    @Published var bleDeviceStatus: BLEDeviceStatus = []
+
     // 历史录音（由 RecordingFileService 驱动）
     var recordingFileService: RecordingFileService?
     /// 当前正在播放的录音 ID（nil 表示无播放）
@@ -72,6 +96,9 @@ final class AppState: ObservableObject {
     init() {
         let stored = UserDefaults.standard.string(forKey: "selectedModel")
         selectedModel = stored.flatMap(WhisperModel.init(rawValue:)) ?? .tiny
+
+        let storedSource = UserDefaults.standard.string(forKey: "recordingSource")
+        recordingSource = storedSource.flatMap(RecordingSource.init(rawValue:)) ?? .microphone
     }
 
     // MARK: Computed

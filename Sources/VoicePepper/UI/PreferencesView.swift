@@ -6,9 +6,70 @@ import KeyboardShortcuts
 struct PreferencesView: View {
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var modelManager: WhisperModelManager
+    @EnvironmentObject var bleDeviceManager: BLEDeviceManager
 
     var body: some View {
         Form {
+            // 录音源 Section
+            Section("录音源") {
+                Picker("当前录音源", selection: $appState.recordingSource) {
+                    ForEach(RecordingSource.allCases) { source in
+                        Text(source.displayName).tag(source)
+                    }
+                }
+            }
+
+            // 蓝牙设备管理 Section
+            Section("蓝牙录音笔") {
+                // 蓝牙状态
+                HStack {
+                    Image(systemName: bleDeviceManager.bluetoothPoweredOn
+                          ? "checkmark.circle.fill" : "xmark.circle.fill")
+                        .foregroundColor(bleDeviceManager.bluetoothPoweredOn ? .green : .red)
+                    Text(bleDeviceManager.bluetoothPoweredOn ? "蓝牙已开启" : "蓝牙未开启")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+
+                // 连接状态
+                HStack {
+                    Circle()
+                        .fill(bleConnectionStatusColor)
+                        .frame(width: 8, height: 8)
+                    Text(bleConnectionStatusText)
+                        .foregroundColor(.secondary)
+                    Spacer()
+
+                    if bleDeviceManager.connectionState == .connected {
+                        Button("断开") {
+                            bleDeviceManager.disconnect()
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                    }
+                }
+
+                // 电量显示
+                if let battery = bleDeviceManager.batteryLevel {
+                    HStack {
+                        Text("电量")
+                        Spacer()
+                        if battery == 110 {
+                            Text("充电中")
+                                .foregroundColor(.green)
+                        } else {
+                            Text("\(battery)%")
+                                .foregroundColor(battery <= 20 ? .red : .primary)
+                        }
+                    }
+                }
+
+                // 扫描和设备列表
+                if bleDeviceManager.connectionState != .connected {
+                    scanSection
+                }
+            }
+
             // Hotkey Section
             Section("快捷键") {
                 HStack {
@@ -77,7 +138,71 @@ struct PreferencesView: View {
         }
         .formStyle(.grouped)
         .padding()
-        .frame(width: 520, height: 480)
+        .frame(width: 520, height: 640)
+    }
+
+    // MARK: BLE Scan Section
+
+    private var scanSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Button(bleDeviceManager.connectionState == .scanning ? "扫描中…" : "扫描设备") {
+                    bleDeviceManager.startScan()
+                }
+                .disabled(bleDeviceManager.connectionState == .scanning || !bleDeviceManager.bluetoothPoweredOn)
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+
+                if bleDeviceManager.connectionState == .scanning {
+                    ProgressView()
+                        .scaleEffect(0.6)
+                }
+            }
+
+            if bleDeviceManager.discoveredDevices.isEmpty && bleDeviceManager.connectionState != .scanning {
+                Text("未发现设备，请确保录音笔（A06）已开机并在附近")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
+            ForEach(bleDeviceManager.discoveredDevices) { device in
+                HStack {
+                    VStack(alignment: .leading) {
+                        Text(device.name)
+                            .font(.body)
+                        Text("信号: \(device.rssi) dBm")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    Spacer()
+                    Button("连接") {
+                        bleDeviceManager.connect(deviceID: device.id)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.small)
+                }
+            }
+        }
+    }
+
+    // MARK: BLE Status Helpers
+
+    private var bleConnectionStatusColor: Color {
+        switch bleDeviceManager.connectionState {
+        case .connected: return .green
+        case .connecting, .reconnecting: return .orange
+        default: return .red
+        }
+    }
+
+    private var bleConnectionStatusText: String {
+        switch bleDeviceManager.connectionState {
+        case .connected: return "已连接"
+        case .connecting: return "连接中…"
+        case .reconnecting(let n): return "重连中 (\(n)/\(BLEReconnectPolicy.maxAttempts))"
+        case .scanning: return "扫描中…"
+        case .disconnected: return "未连接"
+        }
     }
 
     /// 任意模型正在下载或加载时为 true，此时禁止切换

@@ -24,6 +24,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var accessibilityMonitor: AccessibilityMonitor?
     private let recordingFileService = RecordingFileService()
 
+    // BLE 录音笔服务
+    let bleDeviceManager = BLEDeviceManager()
+    private var bleRecorderService: BLERecorderService?
+
     private var cancellables = Set<AnyCancellable>()
     /// 手动管理偏好设置窗口，避免 .accessory app 中 showSettingsWindow: 不可靠的问题
     private var preferencesWindow: NSWindow?
@@ -48,6 +52,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         audioCaptureService?.stop()
+        bleRecorderService?.stopRealtimeTranscription()
         transcriptionService?.stop()
         // ggml-metal 析构链在 exit() 路径上会触发 GGML_ASSERT 并卡入 UE 状态；
         // _exit() 跳过 C++ 析构，由内核直接回收所有 GPU/文件资源，安全可靠。
@@ -105,20 +110,64 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.openPreferencesWindow()
         }
 
-        // Connect audio → transcription
+        // Connect mic audio → transcription
         audioService.audioSegmentPublisher
             .sink { [weak transcriptionSvc] segment in
                 transcriptionSvc?.enqueue(segment)
             }
             .store(in: &cancellables)
 
-        // 录音会话结束 → 持久化整段录音（所有 VAD 段已合并）
+        // 麦克风录音会话结束 → 持久化
         audioService.sessionEndPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] samples in
                 self?.recordingFileService.save(samples: samples)
             }
             .store(in: &cancellables)
+
+        // BLE 录音笔服务
+        setupBLEServices(transcriptionSvc: transcriptionSvc)
+    }
+
+    private func setupBLEServices(transcriptionSvc: TranscriptionService) {
+        let bleSvc = BLERecorderService(deviceManager: bleDeviceManager, appState: appState)
+        bleRecorderService = bleSvc
+
+        // BLE audio → transcription
+        bleSvc.audioSegmentPublisher
+            .sink { [weak transcriptionSvc] segment in
+                transcriptionSvc?.enqueue(segment)
+            }
+            .store(in: &cancellables)
+
+        // BLE 音频电平 → AppState
+        bleSvc.levelPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] level in
+                self?.appState.audioLevel = level
+            }
+            .store(in: &cancellables)
+
+        // BLE 录音会话结束 → 持久化
+        bleSvc.sessionEndPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] samples in
+                self?.recordingFileService.save(samples: samples)
+            }
+            .store(in: &cancellables)
+
+        // BLE 状态 → AppState（直接回调）
+        NSLog("[AppDelegate] 绑定 BLE 回调到实例 %p", Unmanaged.passUnretained(bleDeviceManager).toOpaque().debugDescription)
+        bleDeviceManager.onConnectionStateChanged = { [weak self] state in
+            NSLog("[AppDelegate] BLE 状态同步: %@", String(describing: state))
+            self?.appState.bleConnectionState = state
+        }
+        bleDeviceManager.onBatteryLevelChanged = { [weak self] level in
+            self?.appState.bleBatteryLevel = level
+        }
+        bleDeviceManager.onDeviceStatusChanged = { [weak self] status in
+            self?.appState.bleDeviceStatus = status
+        }
     }
 
     private func setupStatusBar() {
@@ -167,7 +216,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: Recording Control
 
     func handleToggleRecording() {
-        NSLog("[AppDelegate] handleToggleRecording called, AXTrusted=%d, isRecording=%d",
+        NSLog("[AppDelegate] handleToggleRecording called, source=%@, AXTrusted=%d, isRecording=%d",
+              appState.recordingSource.rawValue,
               AXIsProcessTrusted() ? 1 : 0,
               appState.recordingState.isRecording ? 1 : 0)
         // Task 3.2 - check accessibility permission before recording
@@ -185,6 +235,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func startRecording() {
+        switch appState.recordingSource {
+        case .microphone:
+            startMicRecording()
+        case .bluetoothRecorder:
+            startBLERecording()
+        }
+    }
+
+    private func stopRecording() {
+        switch appState.recordingSource {
+        case .microphone:
+            audioCaptureService?.stop()
+        case .bluetoothRecorder:
+            bleRecorderService?.stopRealtimeTranscription()
+        }
+        appState.stopRecording()
+    }
+
+    private func startMicRecording() {
         audioCaptureService?.start { [weak self] error in
             Task { @MainActor in
                 if let error {
@@ -196,9 +265,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    private func stopRecording() {
-        audioCaptureService?.stop()
-        appState.stopRecording()
+    private func startBLERecording() {
+        guard bleDeviceManager.connectionState == .connected else {
+            NSLog("[AppDelegate] 蓝牙录音笔未连接，无法启动录音")
+            return
+        }
+        bleRecorderService?.startRealtimeTranscription()
+        appState.startRecording()
     }
 
     // MARK: Preferences Window
@@ -214,12 +287,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let view = PreferencesView()
             .environmentObject(appState)
             .environmentObject(modelManager)
+            .environmentObject(bleDeviceManager)
 
         let vc = NSHostingController(rootView: view)
         let window = NSWindow(contentViewController: vc)
         window.title = "偏好设置"
         window.styleMask = [.titled, .closable, .miniaturizable]
-        window.setContentSize(NSSize(width: 420, height: 520))
+        window.setContentSize(NSSize(width: 520, height: 640))
         window.center()
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
