@@ -1,0 +1,37 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "0c4d0aff9532",
+  "session_id": "7303c25b-cf83-449d-b908-dda2aaddcf85",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-17T17:20:02.131686Z",
+  "branch": "feature/bluetooth-recorder-channel",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "docs/solutions/integration-issues/ble-opus-audio-format-discovery.md"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-sonnet-4-6",
+  "turn_id": "d24af1db6663",
+  "token_usage": {
+    "input_tokens": 362,
+    "cache_creation_tokens": 340648,
+    "cache_read_tokens": 40714325,
+    "output_tokens": 135563,
+    "api_call_count": 230
+  },
+  "session_metrics": {
+    "turn_count": 8
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-17T17:20:01.389759Z",
+    "agent_lines": 96,
+    "agent_removed": 0,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 96,
+    "total_lines_changed": 96,
+    "agent_percentage": 100,
+    "metric_version": 2
+  }
+}

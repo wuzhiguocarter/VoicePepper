@@ -1,0 +1,25 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "0c4d0aff9532",
+  "strategy": "manual-commit",
+  "branch": "feature/bluetooth-recorder-channel",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "docs/solutions/integration-issues/ble-opus-audio-format-discovery.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0c/4d0aff9532/0/metadata.json",
+      "transcript": "/0c/4d0aff9532/0/full.jsonl",
+      "content_hash": "/0c/4d0aff9532/0/content_hash.txt",
+      "prompt": "/0c/4d0aff9532/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 362,
+    "cache_creation_tokens": 340648,
+    "cache_read_tokens": 40714325,
+    "output_tokens": 135563,
+    "api_call_count": 230
+  }
+}
