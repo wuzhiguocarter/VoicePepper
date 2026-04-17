@@ -15,6 +15,7 @@ final class BLERecorderService {
 
     private let deviceManager: BLEDeviceManager
     private let protocol_ = BLEProtocol()
+    private let opusDecoder: BLEOpusDecoder?
     private weak var appState: AppState?
     private var cancellables = Set<AnyCancellable>()
 
@@ -27,11 +28,16 @@ final class BLERecorderService {
     /// 是否处于实时转写会话中
     private var isTranscribing = false
 
+    /// 调试用：原始 BLE 音频数据 dump 文件
+    private var rawDumpHandle: FileHandle?
+    private var rawDumpPacketCount = 0
+
     // MARK: Init
 
     init(deviceManager: BLEDeviceManager, appState: AppState) {
         self.deviceManager = deviceManager
         self.appState = appState
+        self.opusDecoder = BLEOpusDecoder()
         setupSubscriptions()
     }
 
@@ -46,6 +52,10 @@ final class BLERecorderService {
         isTranscribing = true
         audioBuffer.removeAll()
         sessionSamples.removeAll()
+
+        // 调试：开始 dump 原始音频数据
+        startRawDump()
+
         deviceManager.sendCommand(type: .audio, command: BLERealtimeCommand.start.rawValue)
         NSLog("[BLERecorderService] 发送开始实时转写命令")
     }
@@ -57,6 +67,10 @@ final class BLERecorderService {
         flushBuffer()
         emitSessionEnd()
         isTranscribing = false
+
+        // 调试：停止 dump
+        stopRawDump()
+
         NSLog("[BLERecorderService] 发送结束实时转写命令")
     }
 
@@ -126,7 +140,12 @@ final class BLERecorderService {
         switch cmd {
         case .audioData:
             guard isTranscribing else { return }
-            let samples = convertInt16ToFloat32(packet.payload)
+            // 调试：dump 原始音频负载
+            dumpRawPayload(packet.payload)
+
+            // Opus 解码：160 字节 = 4 × 40 字节 Opus 帧 → 16kHz Float32 PCM
+            let samples = opusDecoder?.decodePacket(packet.payload) ?? []
+            guard !samples.isEmpty else { return }
             audioBuffer.append(contentsOf: samples)
             sessionSamples.append(contentsOf: samples)
 
@@ -291,5 +310,35 @@ final class BLERecorderService {
             sessionEndPublisher.send(completed)
         }
         sessionSamples.removeAll()
+    }
+
+    // MARK: - Debug: Raw Audio Dump
+
+    private func startRawDump() {
+        let path = "/tmp/ble_audio_raw.bin"
+        FileManager.default.createFile(atPath: path, contents: nil)
+        rawDumpHandle = FileHandle(forWritingAtPath: path)
+        rawDumpPacketCount = 0
+        NSLog("[BLERecorderService] 开始 dump 原始音频到 %@", path)
+    }
+
+    private func dumpRawPayload(_ data: Data) {
+        rawDumpHandle?.write(data)
+        rawDumpPacketCount += 1
+        if rawDumpPacketCount <= 3 {
+            // 前 3 包完整 hex dump 方便分析
+            NSLog("[BLERecorderService] 音频包 #%d (%d bytes): %@",
+                  rawDumpPacketCount, data.count,
+                  data.map { String(format: "%02X", $0) }.joined(separator: " "))
+        }
+        if rawDumpPacketCount % 100 == 0 {
+            NSLog("[BLERecorderService] 已 dump %d 包", rawDumpPacketCount)
+        }
+    }
+
+    private func stopRawDump() {
+        rawDumpHandle?.closeFile()
+        rawDumpHandle = nil
+        NSLog("[BLERecorderService] dump 结束，共 %d 包", rawDumpPacketCount)
     }
 }
