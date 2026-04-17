@@ -1,0 +1,39 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "27d0146ce623",
+  "session_id": "2f551f9e-1f48-4a8b-a206-2fd4412dccba",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-17T16:52:37.32992Z",
+  "branch": "feature/bluetooth-recorder-channel",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "Sources/VoicePepper/App/AppDelegate.swift",
+    "Sources/VoicePepper/Models/AppState.swift",
+    "Sources/VoicePepper/UI/TranscriptionPopoverView.swift"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-sonnet-4-6",
+  "turn_id": "46d7f3caec55",
+  "token_usage": {
+    "input_tokens": 201,
+    "cache_creation_tokens": 408476,
+    "cache_read_tokens": 14990615,
+    "output_tokens": 108964,
+    "api_call_count": 174
+  },
+  "session_metrics": {
+    "turn_count": 4
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-17T16:52:36.654787Z",
+    "agent_lines": 0,
+    "agent_removed": 0,
+    "human_added": 1737,
+    "human_modified": 7,
+    "human_removed": 0,
+    "total_committed": 1737,
+    "total_lines_changed": 1756,
+    "agent_percentage": 0,
+    "metric_version": 2
+  }
+}

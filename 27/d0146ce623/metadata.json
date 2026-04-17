@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "27d0146ce623",
+  "strategy": "manual-commit",
+  "branch": "feature/bluetooth-recorder-channel",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "Sources/VoicePepper/App/AppDelegate.swift",
+    "Sources/VoicePepper/Models/AppState.swift",
+    "Sources/VoicePepper/UI/TranscriptionPopoverView.swift"
+  ],
+  "sessions": [
+    {
+      "metadata": "/27/d0146ce623/0/metadata.json",
+      "transcript": "/27/d0146ce623/0/full.jsonl",
+      "content_hash": "/27/d0146ce623/0/content_hash.txt",
+      "prompt": "/27/d0146ce623/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 201,
+    "cache_creation_tokens": 408476,
+    "cache_read_tokens": 14990615,
+    "output_tokens": 108964,
+    "api_call_count": 174
+  }
+}
