@@ -40,11 +40,25 @@ let package = Package(
             ]
         ),
 
+        // C bridge to system libopus (installed via `brew install opus`)
+        .target(
+            name: "COpus",
+            path: "Sources/COpus",
+            publicHeadersPath: "include",
+            cSettings: [
+                .unsafeFlags(["-I\(whisperInclude)"]),
+            ],
+            linkerSettings: [
+                .unsafeFlags(["-L\(whisperLib)", "-lopus"]),
+            ]
+        ),
+
         // Main macOS app target
         .executableTarget(
             name: "VoicePepper",
             dependencies: [
                 "CWhisper",
+                "COpus",
                 .product(name: "KeyboardShortcuts", package: "KeyboardShortcuts"),
             ],
             path: "Sources/VoicePepper",
