@@ -63,7 +63,11 @@
 - **THEN** 系统停止自动重连，UI 显示"连接已断开，请手动重连"，用户可通过"重新连接"按钮手动发起
 
 ### Requirement: 设备信息查询
-系统 SHALL 在连接成功后查询录音笔的电池电量和设备状态，并持续更新。
+系统 SHALL 在连接成功后查询录音笔的电池电量和设备状态，并持续更新。系统 SHALL 通过 didSet + 回调机制将连接状态、电量、设备状态同步到 AppState，供 Popover UI 显示。
+
+#### Scenario: 状态回调同步
+- **WHEN** BLEDeviceManager 的 connectionState 属性变化
+- **THEN** didSet 触发 onConnectionStateChanged 回调，AppDelegate 在回调中直接赋值 appState.bleConnectionState，Popover 即时反映新状态
 
 #### Scenario: 获取电池电量
 - **WHEN** 设备连接成功
