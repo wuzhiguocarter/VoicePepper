@@ -10,6 +10,10 @@
     <key>com.apple.security.network.client</key>
     <true/>
 
+    <!-- Bluetooth access for BLE recording pen -->
+    <key>com.apple.security.device.bluetooth</key>
+    <true/>
+
     <!-- App Sandbox disabled for global hotkey support -->
     <!-- Note: Enable and use com.apple.security.temporary-exception.apple-events
          if submitting to Mac App Store. For direct distribution, Sandbox is off. -->
