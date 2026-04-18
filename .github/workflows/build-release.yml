@@ -78,12 +78,20 @@ jobs:
 
       # --- Code signing setup (optional) -----------------------------------
 
-      - name: Setup signing keychain
-        if: ${{ secrets.APPLE_CERTIFICATE_BASE64 != '' }}
+      - name: Setup signing
+        id: signing
         env:
           APPLE_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
         run: |
+          if [[ -z "${APPLE_CERTIFICATE_BASE64:-}" || -z "${APPLE_SIGNING_IDENTITY:-}" ]]; then
+            echo "sign_args=" >> "$GITHUB_OUTPUT"
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::No signing certificate configured. Building unsigned."
+            exit 0
+          fi
+
           # Create temporary keychain
           KEYCHAIN_PATH="$RUNNER_TEMP/build.keychain-db"
           KEYCHAIN_PASSWORD="$(openssl rand -base64 32)"
@@ -107,22 +115,8 @@ jobs:
           security list-keychains -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | tr -d '"')
           security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
 
-      - name: Determine signing identity
-        id: signing
-        env:
-          APPLE_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-        run: |
-          if [[ -n "${APPLE_CERTIFICATE_BASE64:-}" && -n "${APPLE_SIGNING_IDENTITY:-}" ]]; then
-            echo "identity=$APPLE_SIGNING_IDENTITY" >> "$GITHUB_OUTPUT"
-            echo "sign_args=--sign $APPLE_SIGNING_IDENTITY" >> "$GITHUB_OUTPUT"
-            echo "enabled=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "identity=" >> "$GITHUB_OUTPUT"
-            echo "sign_args=" >> "$GITHUB_OUTPUT"
-            echo "enabled=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::No signing certificate configured. Building unsigned."
-          fi
+          echo "sign_args=--sign ${APPLE_SIGNING_IDENTITY}" >> "$GITHUB_OUTPUT"
+          echo "enabled=true" >> "$GITHUB_OUTPUT"
 
       # --- Build .app bundles ----------------------------------------------
 
@@ -199,9 +193,9 @@ jobs:
 
           | File | Architecture | Description |
           |------|-------------|-------------|
-          | \`VoicePepper-${VERSION}-arm64.dmg\` | Apple Silicon | M1/M2/M3/M4 Mac |
-          | \`VoicePepper-${VERSION}-x86_64.dmg\` | Intel | Intel Mac |
-          | \`VoicePepper-${VERSION}-universal.dmg\` | Universal | All Mac (larger) |
+          | VoicePepper-${VERSION}-arm64.dmg | Apple Silicon | M1/M2/M3/M4 Mac |
+          | VoicePepper-${VERSION}-x86_64.dmg | Intel | Intel Mac |
+          | VoicePepper-${VERSION}-universal.dmg | Universal | All Mac (larger) |
 
           ## Changes
 
