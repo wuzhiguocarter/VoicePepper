@@ -1,0 +1,37 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "37ece5eb4d62",
+  "session_id": "19e2d140-e6c6-4ca4-8a69-7e662e169c74",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-18T09:52:59.253291Z",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    ".github/workflows/build-release.yml"
+  ],
+  "agent": "Factory AI Droid",
+  "model": "GLM-5.1-[Z.AI-Coding-Plan]---Anthropic-0",
+  "turn_id": "f83ef3b4e271",
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  },
+  "session_metrics": {
+    "turn_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-18T09:52:59.158679Z",
+    "agent_lines": 1,
+    "agent_removed": 0,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 1,
+    "total_lines_changed": 1,
+    "agent_percentage": 100,
+    "metric_version": 2
+  }
+}
