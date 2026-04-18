@@ -166,6 +166,21 @@ fix_rpaths() {
         fi
     done < <(otool -L "$binary" | tail -n +2 | awk '{print $1}' | grep -v '@executable_path' | grep -v '/usr/lib/' | grep -v '/System/')
 
+    # Fix ggml backend .so files — they reference @rpath/libggml-base.0.dylib
+    if [[ -d "$fw_dir/ggml-backends" ]]; then
+        for so in "$fw_dir/ggml-backends"/*.so; do
+            [[ -f "$so" ]] || continue
+            # Fix @rpath references to point to ../Frameworks/ (one level up from ggml-backends/)
+            while IFS= read -r dep; do
+                local dep_name
+                dep_name="$(basename "$dep")"
+                if [[ -f "$fw_dir/$dep_name" ]]; then
+                    install_name_tool -change "$dep" "@executable_path/../Frameworks/$dep_name" "$so" 2>/dev/null || true
+                fi
+            done < <(otool -L "$so" | tail -n +2 | awk '{print $1}' | grep -E '@rpath|homebrew' | grep -v '/usr/lib/' | grep -v '/System/')
+        done
+    fi
+
     log "Rpaths fixed"
 }
 

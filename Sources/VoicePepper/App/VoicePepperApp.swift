@@ -1,6 +1,7 @@
 import SwiftUI
 import AppKit
 import Foundation
+import CWhisper
 
 // MARK: - App Entry Point
 
@@ -9,12 +10,13 @@ struct VoicePepperApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     init() {
-        // ggml 后端插件搜索路径：使用 .app bundle 内嵌入的插件，
-        // 避免依赖 Homebrew 安装路径（硬编码在 dylib 中，分发后不存在）
+        // ggml 后端插件（Metal, BLAS, CPU）嵌入在 .app bundle 内，
+        // 必须在 whisper 初始化前显式加载，否则 dylib 中硬编码的
+        // Homebrew 路径在分发环境下不存在，导致无 GPU 加速崩溃
         if let frameworksPath = Bundle.main.privateFrameworksPath {
             let backendsPath = (frameworksPath as NSString).appendingPathComponent("ggml-backends")
             if FileManager.default.fileExists(atPath: backendsPath) {
-                setenv("GGML_BACKEND_PATH", backendsPath, 1)
+                ggml_backend_load_all_from_path(backendsPath)
             }
         }
     }
