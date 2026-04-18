@@ -34,6 +34,10 @@
     <key>NSAppleEventsUsageDescription</key>
     <string>VoicePepper 需要辅助功能权限以注册全局快捷键，实现在任意应用中触发录音。</string>
 
+    <!-- Bluetooth permission (BLE recording pen) -->
+    <key>NSBluetoothAlwaysUsageDescription</key>
+    <string>VoicePepper 需要蓝牙权限以连接 BLE 录音笔设备，实现无线实时转写。</string>
+
     <!-- App category -->
     <key>LSApplicationCategoryType</key>
     <string>public.app-category.productivity</string>
