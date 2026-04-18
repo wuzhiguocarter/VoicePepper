@@ -1,0 +1,5 @@
+.claude/skills/kb-dev-workflow 适配一份到 .codex/skills
+
+---
+
+.claude/skills/kb-dev-workflow 适配一份到 .codex/skills

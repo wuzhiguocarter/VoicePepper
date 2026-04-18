@@ -1,0 +1,44 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "eb8af10ca4ae",
+  "strategy": "manual-commit",
+  "branch": "feature/persist-transcription-and-fix-vad-flush",
+  "checkpoints_count": 0,
+  "files_touched": [
+    ".factory/skills/kb-dev-workflow/SKILL.md",
+    "Sources/VoicePepper/App/AppDelegate.swift",
+    "Sources/VoicePepper/Services/AudioCaptureService.swift",
+    "Sources/VoicePepper/Services/RecordingFileService.swift",
+    "Sources/VoicePepper/UI/RecordingHistoryView.swift",
+    "Sources/VoicePepper/UI/StatusBarManager.swift",
+    "docs/solutions/logic-errors/vad-buffer-not-flushed-before-stop-2026-04-18.md",
+    "openspec/changes/archive/2026-04-18-macos-voice-recorder-widget/.openspec.yaml",
+    "openspec/changes/archive/2026-04-18-macos-voice-recorder-widget/design.md",
+    "openspec/changes/archive/2026-04-18-macos-voice-recorder-widget/proposal.md",
+    "openspec/changes/archive/2026-04-18-macos-voice-recorder-widget/specs/audio-capture/spec.md",
+    "openspec/changes/archive/2026-04-18-macos-voice-recorder-widget/specs/hotkey-control/spec.md",
+    "openspec/changes/archive/2026-04-18-macos-voice-recorder-widget/specs/whisper-transcription/spec.md",
+    "openspec/changes/archive/2026-04-18-macos-voice-recorder-widget/specs/widget-display/spec.md",
+    "openspec/changes/archive/2026-04-18-macos-voice-recorder-widget/tasks.md",
+    "openspec/changes/archive/2026-04-18-persist-transcription-text/.openspec.yaml",
+    "openspec/changes/archive/2026-04-18-persist-transcription-text/design.md",
+    "openspec/changes/archive/2026-04-18-persist-transcription-text/proposal.md",
+    "openspec/changes/archive/2026-04-18-persist-transcription-text/specs/recording-history/spec.md",
+    "openspec/changes/archive/2026-04-18-persist-transcription-text/specs/recording-persistence/spec.md",
+    "openspec/changes/archive/2026-04-18-persist-transcription-text/specs/transcription-persistence/spec.md",
+    "openspec/changes/archive/2026-04-18-persist-transcription-text/tasks.md",
+    "openspec/specs/audio-capture/spec.md",
+    "openspec/specs/hotkey-control/spec.md",
+    "openspec/specs/whisper-transcription/spec.md",
+    "openspec/specs/widget-display/spec.md",
+    "tests/e2e_test.py"
+  ],
+  "sessions": [
+    {
+      "metadata": "/eb/8af10ca4ae/0/metadata.json",
+      "transcript": "/eb/8af10ca4ae/0/full.jsonl",
+      "content_hash": "/eb/8af10ca4ae/0/content_hash.txt",
+      "prompt": "/eb/8af10ca4ae/0/prompt.txt"
+    }
+  ]
+}
