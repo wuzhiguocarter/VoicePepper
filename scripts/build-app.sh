@@ -115,6 +115,11 @@ assemble_app() {
         cp "$dylib" "$app_dir/Contents/Frameworks/"
     done
 
+    # Copy ggml backend plugins (.so files)
+    if [[ -d "$dylib_dir/ggml-backends" ]]; then
+        cp -R "$dylib_dir/ggml-backends" "$app_dir/Contents/Frameworks/ggml-backends"
+    fi
+
     # Fix rpaths
     fix_rpaths "$app_dir"
 
@@ -183,6 +188,14 @@ sign_app() {
         codesign --force --sign "$identity" "$dylib"
     done
 
+    # Sign ggml backend plugins
+    if [[ -d "$app_dir/Contents/Frameworks/ggml-backends" ]]; then
+        for so in "$app_dir/Contents/Frameworks/ggml-backends"/*.so; do
+            [[ -f "$so" ]] || continue
+            codesign --force --sign "$identity" "$so"
+        done
+    fi
+
     # Sign the .app bundle with entitlements
     # Use hardened runtime only with Developer ID (ad-hoc doesn't support notarization anyway)
     local sign_opts=(--deep --force --sign "$identity" --entitlements "$ENTITLEMENTS")
@@ -223,6 +236,19 @@ collect_dylibs() {
         # Copy the actual file (resolve symlinks)
         cp -L "$src" "$staging_dir/$dylib"
     done
+
+    # Copy ggml backend plugins (.so files for Metal, BLAS, CPU)
+    local ggml_libexec="$prefix/opt/ggml/libexec"
+    if [[ -d "$ggml_libexec" ]]; then
+        mkdir -p "$staging_dir/ggml-backends"
+        for so in "$ggml_libexec"/*.so; do
+            [[ -f "$so" ]] || continue
+            cp -L "$so" "$staging_dir/ggml-backends/"
+        done
+        log "Collected $(ls "$staging_dir/ggml-backends/" | wc -l | tr -d ' ') ggml backend plugins"
+    else
+        log "WARNING: ggml libexec not found at $ggml_libexec, no GPU backends will be embedded"
+    fi
 }
 
 # ---------------------------------------------------------------------------
@@ -271,6 +297,23 @@ if [[ "$ARCH" == "universal" ]]; then
             "$X86_64_DYLIBS/$dylib" \
             -output "$UNIVERSAL_DYLIBS/$dylib"
     done
+
+    # Merge ggml backend plugins
+    if [[ -d "$ARM64_DYLIBS/ggml-backends" && -d "$X86_64_DYLIBS/ggml-backends" ]]; then
+        mkdir -p "$UNIVERSAL_DYLIBS/ggml-backends"
+        for so in "$ARM64_DYLIBS/ggml-backends"/*.so; do
+            local name
+            name="$(basename "$so")"
+            if [[ -f "$X86_64_DYLIBS/ggml-backends/$name" ]]; then
+                lipo -create "$so" "$X86_64_DYLIBS/ggml-backends/$name" \
+                    -output "$UNIVERSAL_DYLIBS/ggml-backends/$name"
+            else
+                cp "$so" "$UNIVERSAL_DYLIBS/ggml-backends/$name"
+            fi
+        done
+    elif [[ -d "$ARM64_DYLIBS/ggml-backends" ]]; then
+        cp -R "$ARM64_DYLIBS/ggml-backends" "$UNIVERSAL_DYLIBS/ggml-backends"
+    fi
 
     # Assemble .app
     APP_DIR="$(assemble_app universal "$UNIVERSAL_STAGING/VoicePepper" "$UNIVERSAL_DYLIBS")"
