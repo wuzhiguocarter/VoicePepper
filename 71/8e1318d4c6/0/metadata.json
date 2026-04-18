@@ -1,0 +1,39 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "718e1318d4c6",
+  "session_id": "d94c70a8-78de-4777-9d62-b4d9372dc25e",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-18T07:53:16.80749Z",
+  "branch": "feat/ci-dmg-packaging",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "scripts/build-app.sh",
+    "Sources/VoicePepper/App/VoicePepperApp.swift"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "5122eb5b7b81",
+  "checkpoint_transcript_start": 1148,
+  "transcript_lines_at_start": 1148,
+  "token_usage": {
+    "input_tokens": 29,
+    "cache_creation_tokens": 408007,
+    "cache_read_tokens": 5054320,
+    "output_tokens": 11069,
+    "api_call_count": 27
+  },
+  "session_metrics": {
+    "turn_count": 13
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-18T07:53:16.26533Z",
+    "agent_lines": 55,
+    "agent_removed": 0,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 55,
+    "total_lines_changed": 55,
+    "agent_percentage": 100,
+    "metric_version": 2
+  }
+}
