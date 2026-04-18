@@ -1,0 +1,39 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "3c5c98b2e919",
+  "session_id": "d94c70a8-78de-4777-9d62-b4d9372dc25e",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-18T09:36:42.683273Z",
+  "branch": "feat/ci-dmg-packaging",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "README.en.md",
+    "README.zh.md"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "3e18a66d83b1",
+  "checkpoint_transcript_start": 1639,
+  "transcript_lines_at_start": 1639,
+  "token_usage": {
+    "input_tokens": 26,
+    "cache_creation_tokens": 502235,
+    "cache_read_tokens": 3704994,
+    "output_tokens": 8177,
+    "api_call_count": 17
+  },
+  "session_metrics": {
+    "turn_count": 17
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-18T09:36:42.00388Z",
+    "agent_lines": 286,
+    "agent_removed": 0,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 286,
+    "total_lines_changed": 286,
+    "agent_percentage": 100,
+    "metric_version": 2
+  }
+}
