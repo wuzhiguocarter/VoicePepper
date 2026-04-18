@@ -1,0 +1,1 @@
+'/Applications/VoicePepper.app' 应用安装后还是无法使用
