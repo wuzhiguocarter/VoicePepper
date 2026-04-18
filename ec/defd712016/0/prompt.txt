@@ -1,0 +1,9 @@
+我想在分支上临时测试CI流水线打包应用怎么办?
+
+---
+
+OK
+
+---
+
+'/Applications/VoicePepper.app' 安装后点击没有反应

@@ -1,0 +1,25 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "ecdefd712016",
+  "strategy": "manual-commit",
+  "branch": "feat/ci-dmg-packaging",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "scripts/build-app.sh"
+  ],
+  "sessions": [
+    {
+      "metadata": "/ec/defd712016/0/metadata.json",
+      "transcript": "/ec/defd712016/0/full.jsonl",
+      "content_hash": "/ec/defd712016/0/content_hash.txt",
+      "prompt": "/ec/defd712016/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 26,
+    "cache_creation_tokens": 553235,
+    "cache_read_tokens": 3118906,
+    "output_tokens": 5977,
+    "api_call_count": 20
+  }
+}
