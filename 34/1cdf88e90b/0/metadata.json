@@ -1,0 +1,22 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "341cdf88e90b",
+  "session_id": "d94c70a8-78de-4777-9d62-b4d9372dc25e",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-18T02:40:17.073625Z",
+  "branch": "feat/ci-dmg-packaging",
+  "checkpoints_count": 1,
+  "files_touched": [],
+  "agent": "Claude Code",
+  "turn_id": "64ef86f98c5f",
+  "token_usage": {
+    "input_tokens": 6022,
+    "cache_creation_tokens": 444321,
+    "cache_read_tokens": 11109363,
+    "output_tokens": 66656,
+    "api_call_count": 104
+  },
+  "session_metrics": {
+    "turn_count": 6
+  }
+}
