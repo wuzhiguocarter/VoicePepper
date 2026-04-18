@@ -1,7 +1,9 @@
 {
   "cli_version": "0.5.3",
   "checkpoint_id": "5e264946cd22",
+  "session_id": "cc91ecb9-1743-4f12-8332-6c7b8d04fe86",
   "strategy": "manual-commit",
+  "created_at": "2026-04-18T14:46:32.649564Z",
   "branch": "feature/persist-transcription-and-fix-vad-flush",
   "checkpoints_count": 1,
   "files_touched": [
@@ -14,25 +16,30 @@
     "openspec/changes/macos-voice-recorder-widget/specs/widget-display/spec.md",
     "openspec/changes/macos-voice-recorder-widget/tasks.md"
   ],
-  "sessions": [
-    {
-      "metadata": "/5e/264946cd22/0/metadata.json",
-      "transcript": "/5e/264946cd22/0/full.jsonl",
-      "content_hash": "/5e/264946cd22/0/content_hash.txt",
-      "prompt": ""
-    },
-    {
-      "metadata": "/5e/264946cd22/1/metadata.json",
-      "transcript": "/5e/264946cd22/1/full.jsonl",
-      "content_hash": "/5e/264946cd22/1/content_hash.txt",
-      "prompt": "/5e/264946cd22/1/prompt.txt"
-    }
-  ],
+  "agent": "Claude Code",
+  "turn_id": "741009e5cc49",
+  "checkpoint_transcript_start": 525,
+  "transcript_lines_at_start": 525,
   "token_usage": {
     "input_tokens": 12,
     "cache_creation_tokens": 152745,
     "cache_read_tokens": 1361329,
     "output_tokens": 2969,
     "api_call_count": 11
+  },
+  "session_metrics": {
+    "turn_count": 2
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-18T14:46:32.31623Z",
+    "agent_lines": 0,
+    "agent_removed": 367,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 0,
+    "total_lines_changed": 367,
+    "agent_percentage": 100,
+    "metric_version": 2
   }
 }
