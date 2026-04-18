@@ -8,6 +8,7 @@ struct RecordingItem: Identifiable, Equatable {
     let url: URL
     let duration: TimeInterval   // 秒
     let createdAt: Date
+    let transcriptionURL: URL?   // 配对的 .txt 转录文本文件
 
     var formattedDate: String {
         let f = DateFormatter()
@@ -21,6 +22,16 @@ struct RecordingItem: Identifiable, Equatable {
         let m = total / 60
         let s = total % 60
         return String(format: "%d:%02d", m, s)
+    }
+
+    /// 按需从配对的 .txt 文件读取转录文本
+    var transcriptionText: String? {
+        guard let txtURL = transcriptionURL else { return nil }
+        return try? String(contentsOf: txtURL, encoding: .utf8)
+    }
+
+    static func == (lhs: RecordingItem, rhs: RecordingItem) -> Bool {
+        lhs.id == rhs.id
     }
 }
 
@@ -69,7 +80,9 @@ final class RecordingFileService: ObservableObject {
                     let attrs = try? url.resourceValues(forKeys: [.contentModificationDateKey])
                     let createdAt = attrs?.contentModificationDate ?? Date()
                     let duration = Self.durationOf(url: url)
-                    return RecordingItem(id: UUID(), url: url, duration: duration, createdAt: createdAt)
+                    let txtURL = Self.txtURL(for: url)
+                    let hasTranscription = FileManager.default.fileExists(atPath: txtURL.path)
+                    return RecordingItem(id: UUID(), url: url, duration: duration, createdAt: createdAt, transcriptionURL: hasTranscription ? txtURL : nil)
                 }
                 .sorted { $0.createdAt > $1.createdAt }
         } catch {
@@ -80,7 +93,8 @@ final class RecordingFileService: ObservableObject {
     // MARK: 保存
 
     /// 将整个会话的完整 PCM 样本异步写为一个 WAV 文件（合并所有 VAD 段）。
-    func save(samples: [Float], sampleRate: Double = 16000) {
+    /// 同时将转录条目保存为同名 .txt 文件。
+    func save(samples: [Float], transcriptionEntries: [TranscriptionEntry] = [], sampleRate: Double = 16000) {
         guard !samples.isEmpty else { return }
         let outputURL = makeOutputURL()
         Task { @MainActor [weak self] in
@@ -89,13 +103,32 @@ final class RecordingFileService: ObservableObject {
                 let duration = try await Task.detached(priority: .utility) {
                     try Self.writeWAV(samples: samples, sampleRate: sampleRate, to: outputURL)
                 }.value
-                let item = RecordingItem(id: UUID(), url: outputURL, duration: duration, createdAt: Date())
+
+                // 保存转录文本
+                var txtURL: URL? = nil
+                if !transcriptionEntries.isEmpty {
+                    txtURL = Self.txtURL(for: outputURL)
+                    let text = transcriptionEntries.map { entry in
+                        let f = DateFormatter()
+                        f.dateFormat = "HH:mm:ss"
+                        return "[\(f.string(from: entry.timestamp))] \(entry.text)"
+                    }.joined(separator: "\n")
+                    try text.write(to: txtURL!, atomically: true, encoding: .utf8)
+                }
+
+                let item = RecordingItem(id: UUID(), url: outputURL, duration: duration, createdAt: Date(), transcriptionURL: txtURL)
                 self.recordings.insert(item, at: 0)
                 NSLog("[RecordingFileService] 已保存: %@ (%.1fs)", outputURL.lastPathComponent, duration)
             } catch {
                 NSLog("[RecordingFileService] 写盘失败: %@", error.localizedDescription)
             }
         }
+    }
+
+    /// 根据录音文件 URL 推导配对的 .txt 文件 URL
+    private static func txtURL(for recordingURL: URL) -> URL {
+        let name = recordingURL.deletingPathExtension().lastPathComponent
+        return recordingURL.deletingLastPathComponent().appendingPathComponent("\(name).txt")
     }
 
     // MARK: 删除
@@ -105,6 +138,10 @@ final class RecordingFileService: ObservableObject {
             try FileManager.default.removeItem(at: item.url)
         } catch {
             NSLog("[RecordingFileService] 删除失败: %@", error.localizedDescription)
+        }
+        // 同步删除配对的转录文本文件
+        if let txtURL = item.transcriptionURL {
+            try? FileManager.default.removeItem(at: txtURL)
         }
         recordings.removeAll { $0.id == item.id }
     }

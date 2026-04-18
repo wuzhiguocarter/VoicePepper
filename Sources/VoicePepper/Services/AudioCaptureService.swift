@@ -97,6 +97,9 @@ final class AudioCaptureService {
         engine.inputNode.removeTap(onBus: 0)
         engine.stop()
 
+        // 先强制刷新 VAD 中尚未完成的语音段，确保短时录音也能保存
+        vadDetector.forceFlush()
+
         // Flush remaining samples as final segment
         let remaining = ringBuffer.drainAll()
         if !remaining.isEmpty {

@@ -11,6 +11,10 @@ struct RecordingHistoryView: View {
     // AVAudioPlayer 持有在 StateObject 中以保活
     @StateObject private var player = AudioPlayerWrapper()
 
+    // 转录文本预览 Sheet 状态
+    @State private var selectedTranscriptionText: String?
+    @State private var selectedTranscriptionDate: String?
+
     var body: some View {
         Group {
             if service.recordings.isEmpty {
@@ -21,6 +25,12 @@ struct RecordingHistoryView: View {
         }
         .onAppear {
             service.loadRecordings()
+        }
+        .sheet(item: Binding(
+            get: { selectedTranscriptionText.map { IdentifiableString(value: $0, subtitle: selectedTranscriptionDate ?? "") } },
+            set: { _ in selectedTranscriptionText = nil; selectedTranscriptionDate = nil }
+        )) { item in
+            TranscriptionTextView(text: item.value, title: item.subtitle)
         }
     }
 
@@ -53,7 +63,11 @@ struct RecordingHistoryView: View {
                     isPlaying: currentlyPlayingId == item.id,
                     onPlayPause: { handlePlayPause(item: item) },
                     onRevealInFinder: { revealInFinder(item: item) },
-                    onDelete: { service.delete(item: item) }
+                    onDelete: { service.delete(item: item) },
+                    onViewTranscription: {
+                        selectedTranscriptionText = item.transcriptionText
+                        selectedTranscriptionDate = item.formattedDate
+                    }
                 )
                 .listRowInsets(EdgeInsets(top: 4, leading: 8, bottom: 4, trailing: 8))
             }
@@ -107,14 +121,22 @@ private struct RecordingRowView: View {
     let onPlayPause: () -> Void
     let onRevealInFinder: () -> Void
     let onDelete: () -> Void
+    let onViewTranscription: () -> Void
 
     var body: some View {
         HStack(spacing: 8) {
             // 左侧信息
             VStack(alignment: .leading, spacing: 2) {
-                Text(item.formattedDate)
-                    .font(.callout)
-                    .lineLimit(1)
+                HStack(spacing: 4) {
+                    Text(item.formattedDate)
+                        .font(.callout)
+                        .lineLimit(1)
+                    if item.transcriptionURL != nil {
+                        Image(systemName: "doc.text")
+                            .font(.caption2)
+                            .foregroundColor(.accentColor)
+                    }
+                }
                 Text(item.formattedDuration)
                     .font(.caption)
                     .foregroundColor(.secondary)
@@ -131,6 +153,18 @@ private struct RecordingRowView: View {
             .buttonStyle(.borderless)
             .help(isPlaying ? "暂停" : "播放")
             .accessibilityLabel(isPlaying ? "暂停" : "播放")
+
+            // 查看转录文本按钮
+            if item.transcriptionURL != nil {
+                Button(action: onViewTranscription) {
+                    Image(systemName: "doc.text")
+                        .font(.body)
+                        .foregroundColor(.accentColor)
+                }
+                .buttonStyle(.borderless)
+                .help("查看转录文本")
+                .accessibilityLabel("查看转录文本")
+            }
 
             // 在 Finder 中显示按钮
             Button(action: onRevealInFinder) {
@@ -197,5 +231,78 @@ final class AudioPlayerWrapper: NSObject, ObservableObject, AVAudioPlayerDelegat
             self.completionHandler?()
             self.completionHandler = nil
         }
+    }
+}
+
+// MARK: - Identifiable String (Sheet binding helper)
+
+private struct IdentifiableString: Identifiable {
+    let id = UUID()
+    let value: String
+    let subtitle: String
+}
+
+// MARK: - Transcription Text View (Sheet)
+
+struct TranscriptionTextView: View {
+    let text: String
+    let title: String
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var showCopied = false
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // 标题栏
+            HStack {
+                Text("转录文本 - \(title)")
+                    .font(.headline)
+                Spacer()
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(.secondary)
+                }
+                .buttonStyle(.borderless)
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 12)
+            .padding(.bottom, 8)
+
+            Divider()
+
+            // 文本内容
+            ScrollView {
+                Text(text)
+                    .font(.body)
+                    .textSelection(.enabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(16)
+            }
+
+            Divider()
+
+            // 底部操作栏
+            HStack {
+                Button {
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(text, forType: .string)
+                    showCopied = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        showCopied = false
+                    }
+                } label: {
+                    Label(showCopied ? "已复制" : "复制全部", systemImage: "doc.on.doc")
+                        .font(.callout)
+                }
+                .buttonStyle(.bordered)
+
+                Spacer()
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+        }
+        .frame(width: 380, height: 320)
     }
 }

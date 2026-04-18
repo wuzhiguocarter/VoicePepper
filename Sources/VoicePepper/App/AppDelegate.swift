@@ -121,7 +121,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         audioService.sessionEndPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] samples in
-                self?.recordingFileService.save(samples: samples)
+                let entries = self?.appState.entries ?? []
+                self?.recordingFileService.save(samples: samples, transcriptionEntries: entries)
+                self?.appState.clearSession()
             }
             .store(in: &cancellables)
 
@@ -152,7 +154,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         bleSvc.sessionEndPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] samples in
-                self?.recordingFileService.save(samples: samples)
+                let entries = self?.appState.entries ?? []
+                self?.recordingFileService.save(samples: samples, transcriptionEntries: entries)
+                self?.appState.clearSession()
             }
             .store(in: &cancellables)
 

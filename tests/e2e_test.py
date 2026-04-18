@@ -20,6 +20,7 @@ sys.path.insert(0, "/Users/wuzhiguo/projects/macos-ui-automation-mcp/src")
 
 import AppKit
 import ApplicationServices as AS
+import Quartz
 
 
 # ── 辅助函数 ──────────────────────────────────────────────────────────────────
@@ -35,6 +36,40 @@ def ax_children(element):
 
 def ax_press(element):
     return AS.AXUIElementPerformAction(element, "AXPress")
+
+
+def ax_get_point(element, attr):
+    """Decode AXValue CGPoint"""
+    err, val = AS.AXUIElementCopyAttributeValue(element, attr, None)
+    if err != 0 or val is None:
+        return None
+    _, point = AS.AXValueGetValue(val, AS.kAXValueCGPointType, None)
+    return point
+
+
+def ax_get_size(element, attr):
+    """Decode AXValue CGSize"""
+    err, val = AS.AXUIElementCopyAttributeValue(element, attr, None)
+    if err != 0 or val is None:
+        return None
+    _, size = AS.AXValueGetValue(val, AS.kAXValueCGSizeType, None)
+    return size
+
+
+def cg_click(element):
+    """Click an AX element using CGEvent (works reliably with status bar buttons)."""
+    pos = ax_get_point(element, "AXPosition")
+    size = ax_get_size(element, "AXSize")
+    if pos is None or size is None:
+        return False
+    px = pos.x + size.width / 2
+    py = pos.y + size.height / 2
+    down = Quartz.CGEventCreateMouseEvent(None, Quartz.kCGEventLeftMouseDown, (px, py), Quartz.kCGMouseButtonLeft)
+    Quartz.CGEventPost(Quartz.kCGHIDEventTap, down)
+    time.sleep(0.05)
+    up = Quartz.CGEventCreateMouseEvent(None, Quartz.kCGEventLeftMouseUp, (px, py), Quartz.kCGMouseButtonLeft)
+    Quartz.CGEventPost(Quartz.kCGHIDEventTap, up)
+    return True
 
 
 def collect_elements(element, depth=15, result=None):
@@ -124,17 +159,43 @@ def main():
     # 5. 验证 Popover 已打开
     print("\n[5] 验证 Popover 已打开")
     focused = ax_attr(ax_app, "AXFocusedWindow")
+    popover_el = None
     if focused:
         role = ax_attr(focused, "AXRole")
         log(f"AXFocusedWindow.AXRole = {role!r}")
-    check(
-        focused is not None and ax_attr(focused, "AXRole") == "AXPopover",
-        "AXFocusedWindow 是 AXPopover"
-    )
+        # Check if focused window is the popover (AXPopover or AXWindow with transcriptionPopover inside)
+        all_focused = collect_elements(focused, depth=15)
+        focused_ids = {e["identifier"] for e in all_focused if e["identifier"]}
+        if "transcriptionPopover" in focused_ids:
+            popover_el = focused
+
+    # If not found in focused window, search all windows
+    if popover_el is None:
+        all_windows = ax_attr(ax_app, "AXWindows") or []
+        for w in all_windows:
+            w_elements = collect_elements(w, depth=15)
+            w_ids = {e["identifier"] for e in w_elements if e["identifier"]}
+            if "transcriptionPopover" in w_ids:
+                popover_el = w
+                break
+
+    # Also check under the status bar button (Popover may be a child of AXMenuBarItem)
+    if popover_el is None:
+        extras_bar2 = ax_attr(ax_app, "AXExtrasMenuBar")
+        if extras_bar2:
+            for child in ax_children(extras_bar2):
+                if ax_attr(child, "AXIdentifier") == "statusBarMicButton":
+                    for sub in ax_children(child):
+                        sub_role = ax_attr(sub, "AXRole")
+                        if sub_role == "AXPopover":
+                            popover_el = sub
+                            break
+
+    check(popover_el is not None, "Popover 已打开")
 
     # 6. 收集 Popover 内所有元素
     print("\n[6] 验证 Popover 内关键元素")
-    all_elements = collect_elements(focused, depth=15)
+    all_elements = collect_elements(popover_el, depth=15)
     identifiers_found = {e["identifier"] for e in all_elements if e["identifier"]}
     descriptions_found = {e["description"] for e in all_elements if e["description"]}
     log(f"Identifiers: {identifiers_found}")
@@ -174,7 +235,7 @@ def main():
     if extras_bar2:
         for child in ax_children(extras_bar2):
             if ax_attr(child, "AXIdentifier") == "statusBarMicButton":
-                ax_press(child)
+                cg_click(child)
                 break
     time.sleep(0.5)
     closed_focused = ax_attr(ax_app, "AXFocusedWindow")
