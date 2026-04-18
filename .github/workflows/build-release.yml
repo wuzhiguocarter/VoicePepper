@@ -157,8 +157,13 @@ jobs:
       - name: Create and push tag (workflow_dispatch only)
         if: github.event_name == 'workflow_dispatch'
         run: |
-          git tag -a "v${{ steps.version.outputs.version }}" -m "Release ${{ steps.version.outputs.version }}"
-          git push origin "v${{ steps.version.outputs.version }}"
+          TAG="v${{ steps.version.outputs.version }}"
+          if git ls-remote --tags origin "refs/tags/${TAG}" | grep -q .; then
+            echo "Tag ${TAG} already exists on remote, skipping"
+          else
+            git tag -a "${TAG}" -m "Release ${{ steps.version.outputs.version }}"
+            git push origin "${TAG}"
+          fi
 
       - name: Create arm64 DMG
         run: |
