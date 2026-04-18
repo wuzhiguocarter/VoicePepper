@@ -15,3 +15,7 @@ Intel 和 Apple Silicon Mac 也需要单独打包
 ---
 
 /opsx:archive
+
+---
+
+/commit-commands:commit-push-pr
