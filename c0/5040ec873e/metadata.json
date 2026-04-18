@@ -1,0 +1,42 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "c05040ec873e",
+  "strategy": "manual-commit",
+  "branch": "feat/ci-dmg-packaging",
+  "checkpoints_count": 5,
+  "files_touched": [
+    ".github/workflows/build-release.yml",
+    ".gitignore",
+    "Package.swift",
+    "SETUP.md",
+    "openspec/changes/archive/2026-04-18-ci-dmg-packaging/.openspec.yaml",
+    "openspec/changes/archive/2026-04-18-ci-dmg-packaging/design.md",
+    "openspec/changes/archive/2026-04-18-ci-dmg-packaging/proposal.md",
+    "openspec/changes/archive/2026-04-18-ci-dmg-packaging/specs/app-bundle-packaging/spec.md",
+    "openspec/changes/archive/2026-04-18-ci-dmg-packaging/specs/ci-build-pipeline/spec.md",
+    "openspec/changes/archive/2026-04-18-ci-dmg-packaging/specs/code-signing-notarization/spec.md",
+    "openspec/changes/archive/2026-04-18-ci-dmg-packaging/specs/dmg-creation/spec.md",
+    "openspec/changes/archive/2026-04-18-ci-dmg-packaging/tasks.md",
+    "openspec/specs/app-bundle-packaging/spec.md",
+    "openspec/specs/ci-build-pipeline/spec.md",
+    "openspec/specs/code-signing-notarization/spec.md",
+    "openspec/specs/dmg-creation/spec.md",
+    "scripts/build-app.sh",
+    "scripts/create-dmg.sh"
+  ],
+  "sessions": [
+    {
+      "metadata": "/c0/5040ec873e/0/metadata.json",
+      "transcript": "/c0/5040ec873e/0/full.jsonl",
+      "content_hash": "/c0/5040ec873e/0/content_hash.txt",
+      "prompt": "/c0/5040ec873e/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 6010,
+    "cache_creation_tokens": 432089,
+    "cache_read_tokens": 9517083,
+    "output_tokens": 58985,
+    "api_call_count": 94
+  }
+}

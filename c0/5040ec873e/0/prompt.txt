@@ -1,0 +1,17 @@
+/opsx:propose  增加CI流水线打包应用dmg文件, 支持Intel和ARM双芯片, 能够让用户直接下载和安装
+
+---
+
+Intel 和 Apple Silicon Mac 也需要单独打包
+
+---
+
+/opsx:apply
+
+---
+
+我没有注册为苹果开发者，然后可以签名吗
+
+---
+
+/opsx:archive
