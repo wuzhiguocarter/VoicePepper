@@ -55,8 +55,7 @@ final class StatusBarManager {
     // MARK: Click Handling
 
     @objc private func handleClick() {
-        guard let event = NSApp.currentEvent else { return }
-        if event.type == .rightMouseUp {
+        if let event = NSApp.currentEvent, event.type == .rightMouseUp {
             showContextMenu()
         } else {
             togglePopover()
