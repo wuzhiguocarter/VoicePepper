@@ -112,6 +112,56 @@ VoicePepper/
     └── VoicePepper.entitlements         # 权限配置
 ```
 
+## CI 构建与发布
+
+### 自动发布流程
+
+推送 `v*` 格式的 Git tag 会自动触发 GitHub Actions 构建，生成 3 个 DMG 并发布到 GitHub Releases：
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+### 本地构建 DMG
+
+```bash
+# 安装打包工具
+brew install create-dmg
+
+# 构建 arm64 版本
+./scripts/build-app.sh --arch arm64
+./scripts/create-dmg.sh --arch arm64 --version 1.0.0
+
+# 构建 x86_64 版本（需要 x86_64 Homebrew 依赖）
+./scripts/build-app.sh --arch x86_64
+./scripts/create-dmg.sh --arch x86_64 --version 1.0.0
+
+# 构建 Universal 版本（同时包含 arm64 和 x86_64）
+./scripts/build-app.sh --arch universal
+./scripts/create-dmg.sh --arch universal --version 1.0.0
+```
+
+产物位于 `build/` 目录：
+- `build/arm64/VoicePepper.app`
+- `build/VoicePepper-1.0.0-arm64.dmg`
+- ...
+
+### GitHub Secrets 配置（代码签名，可选）
+
+未配置签名证书时会生成未签名的 DMG，用户需右键 → 打开来绕过 Gatekeeper。
+
+如需配置签名和公证，在仓库 Settings → Secrets and variables → Actions 中添加：
+
+| Secret | 说明 |
+|--------|------|
+| `APPLE_CERTIFICATE_BASE64` | Developer ID 证书 (.p12) 的 base64 编码：`base64 -i cert.p12` |
+| `APPLE_CERTIFICATE_PASSWORD` | .p12 证书密码 |
+| `APPLE_SIGNING_IDENTITY` | 签名标识，如 `Developer ID Application: Your Name (TEAMID)` |
+| `APPLE_ID` | Apple Developer 账号邮箱 |
+| `APPLE_TEAM_ID` | Apple Developer Team ID |
+| `APPLE_APP_PASSWORD` | App-Specific Password（[appleid.apple.com](https://appleid.apple.com) 生成） |
+
 ## 架构说明
 
 ```

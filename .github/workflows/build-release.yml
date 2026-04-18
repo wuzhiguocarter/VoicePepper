@@ -1,0 +1,235 @@
+name: Build & Release
+
+on:
+  push:
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write  # Required for creating GitHub Releases
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # PR: compile check only (no packaging)
+  # ---------------------------------------------------------------------------
+  build-check:
+    if: github.event_name == 'pull_request'
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies (arm64)
+        run: brew install whisper-cpp opus
+
+      - name: Compile check
+        run: swift build -c release
+
+  # ---------------------------------------------------------------------------
+  # Release: full build → sign → DMG → notarize → publish
+  # ---------------------------------------------------------------------------
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      # --- Dependencies ---------------------------------------------------
+
+      - name: Cache arm64 Homebrew packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            /opt/homebrew/Cellar/whisper-cpp
+            /opt/homebrew/Cellar/opus
+            /opt/homebrew/Cellar/ggml
+            /opt/homebrew/opt/whisper-cpp
+            /opt/homebrew/opt/opus
+            /opt/homebrew/opt/ggml
+          key: homebrew-arm64-${{ runner.os }}-${{ hashFiles('Package.swift') }}
+          restore-keys: homebrew-arm64-${{ runner.os }}-
+
+      - name: Install arm64 dependencies
+        run: brew install whisper-cpp opus create-dmg
+
+      - name: Cache x86_64 Homebrew packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            /usr/local/Cellar/whisper-cpp
+            /usr/local/Cellar/opus
+            /usr/local/Cellar/ggml
+            /usr/local/opt/whisper-cpp
+            /usr/local/opt/opus
+            /usr/local/opt/ggml
+            /usr/local/Homebrew
+          key: homebrew-x86_64-${{ runner.os }}-${{ hashFiles('Package.swift') }}
+          restore-keys: homebrew-x86_64-${{ runner.os }}-
+
+      - name: Install x86_64 Homebrew
+        run: |
+          # Install x86_64 Homebrew if not present
+          if [[ ! -f /usr/local/bin/brew ]]; then
+            arch -x86_64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          fi
+
+      - name: Install x86_64 dependencies
+        run: arch -x86_64 /usr/local/bin/brew install whisper-cpp opus
+
+      # --- Code signing setup (optional) -----------------------------------
+
+      - name: Setup signing keychain
+        if: ${{ secrets.APPLE_CERTIFICATE_BASE64 != '' }}
+        env:
+          APPLE_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        run: |
+          # Create temporary keychain
+          KEYCHAIN_PATH="$RUNNER_TEMP/build.keychain-db"
+          KEYCHAIN_PASSWORD="$(openssl rand -base64 32)"
+          echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> "$GITHUB_ENV"
+          echo "KEYCHAIN_PASSWORD=$KEYCHAIN_PASSWORD" >> "$GITHUB_ENV"
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          # Import certificate
+          CERT_PATH="$RUNNER_TEMP/certificate.p12"
+          echo "$APPLE_CERTIFICATE_BASE64" | base64 --decode > "$CERT_PATH"
+          security import "$CERT_PATH" \
+              -P "$APPLE_CERTIFICATE_PASSWORD" \
+              -A -t cert -f pkcs12 \
+              -k "$KEYCHAIN_PATH"
+          rm -f "$CERT_PATH"
+
+          # Add to keychain search list
+          security list-keychains -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | tr -d '"')
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+      - name: Determine signing identity
+        id: signing
+        env:
+          APPLE_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+        run: |
+          if [[ -n "${APPLE_CERTIFICATE_BASE64:-}" && -n "${APPLE_SIGNING_IDENTITY:-}" ]]; then
+            echo "identity=$APPLE_SIGNING_IDENTITY" >> "$GITHUB_OUTPUT"
+            echo "sign_args=--sign $APPLE_SIGNING_IDENTITY" >> "$GITHUB_OUTPUT"
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "identity=" >> "$GITHUB_OUTPUT"
+            echo "sign_args=" >> "$GITHUB_OUTPUT"
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::No signing certificate configured. Building unsigned."
+          fi
+
+      # --- Build .app bundles ----------------------------------------------
+
+      - name: Build arm64 .app
+        run: |
+          ./scripts/build-app.sh --arch arm64 \
+            ${{ steps.signing.outputs.sign_args }}
+
+      - name: Build x86_64 .app
+        run: |
+          ./scripts/build-app.sh --arch x86_64 \
+            ${{ steps.signing.outputs.sign_args }}
+
+      - name: Build universal .app
+        run: |
+          ./scripts/build-app.sh --arch universal \
+            ${{ steps.signing.outputs.sign_args }}
+
+      # --- Create DMGs -----------------------------------------------------
+
+      - name: Extract version from tag
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Create arm64 DMG
+        run: |
+          ./scripts/create-dmg.sh --arch arm64 \
+            --version ${{ steps.version.outputs.version }} \
+            ${{ steps.signing.outputs.sign_args }}
+
+      - name: Create x86_64 DMG
+        run: |
+          ./scripts/create-dmg.sh --arch x86_64 \
+            --version ${{ steps.version.outputs.version }} \
+            ${{ steps.signing.outputs.sign_args }}
+
+      - name: Create universal DMG
+        run: |
+          ./scripts/create-dmg.sh --arch universal \
+            --version ${{ steps.version.outputs.version }} \
+            ${{ steps.signing.outputs.sign_args }}
+
+      # --- Notarize (optional) ---------------------------------------------
+
+      - name: Notarize DMGs
+        if: steps.signing.outputs.enabled == 'true'
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          for arch in arm64 x86_64 universal; do
+            DMG="build/VoicePepper-${VERSION}-${arch}.dmg"
+            echo "==> Notarizing $DMG"
+            xcrun notarytool submit "$DMG" \
+              --apple-id "$APPLE_ID" \
+              --team-id "$APPLE_TEAM_ID" \
+              --password "$APPLE_APP_PASSWORD" \
+              --wait
+            xcrun stapler staple "$DMG"
+          done
+
+      # --- Publish release --------------------------------------------------
+
+      - name: Generate release notes
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          # Get commits since previous tag
+          PREV_TAG=$(git tag --sort=-creatordate | sed -n '2p' || echo "")
+
+          cat > "$RUNNER_TEMP/release-notes.md" <<HEADER
+          ## Downloads
+
+          | File | Architecture | Description |
+          |------|-------------|-------------|
+          | \`VoicePepper-${VERSION}-arm64.dmg\` | Apple Silicon | M1/M2/M3/M4 Mac |
+          | \`VoicePepper-${VERSION}-x86_64.dmg\` | Intel | Intel Mac |
+          | \`VoicePepper-${VERSION}-universal.dmg\` | Universal | All Mac (larger) |
+
+          ## Changes
+
+          HEADER
+
+          if [[ -n "$PREV_TAG" && "$PREV_TAG" != "$GITHUB_REF_NAME" ]]; then
+            git log --oneline "$PREV_TAG..$GITHUB_REF_NAME" --no-decorate >> "$RUNNER_TEMP/release-notes.md"
+          else
+            git log --oneline -20 --no-decorate >> "$RUNNER_TEMP/release-notes.md"
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: VoicePepper ${{ steps.version.outputs.version }}
+          body_path: ${{ runner.temp }}/release-notes.md
+          files: |
+            build/VoicePepper-${{ steps.version.outputs.version }}-arm64.dmg
+            build/VoicePepper-${{ steps.version.outputs.version }}-x86_64.dmg
+            build/VoicePepper-${{ steps.version.outputs.version }}-universal.dmg
+          draft: false
+          prerelease: false
+
+      # --- Cleanup ----------------------------------------------------------
+
+      - name: Cleanup keychain
+        if: always()
+        run: |
+          if [[ -n "${KEYCHAIN_PATH:-}" && -f "${KEYCHAIN_PATH:-}" ]]; then
+            security delete-keychain "$KEYCHAIN_PATH" 2>/dev/null || true
+          fi

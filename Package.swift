@@ -1,9 +1,12 @@
 // swift-tools-version: 5.9
 import PackageDescription
+import Foundation
 
-// Homebrew whisper-cpp install paths (arm64 Mac)
-let whisperInclude = "/opt/homebrew/include"
-let whisperLib = "/opt/homebrew/lib"
+// Homebrew prefix: /opt/homebrew (arm64) or /usr/local (x86_64)
+// Override via HOMEBREW_PREFIX env var for cross-architecture CI builds
+let homebrewPrefix = ProcessInfo.processInfo.environment["HOMEBREW_PREFIX"] ?? "/opt/homebrew"
+let whisperInclude = "\(homebrewPrefix)/include"
+let whisperLib = "\(homebrewPrefix)/lib"
 
 let package = Package(
     name: "VoicePepper",
