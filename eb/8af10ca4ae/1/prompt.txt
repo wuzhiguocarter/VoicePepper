@@ -1,0 +1,5 @@
+然后帮我验证是否修复
+
+---
+
+把claude skill: .claude/skills/kb-dev-workflow 适配一份到 .droid/skills/kb-dev-workflow
