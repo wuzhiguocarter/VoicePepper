@@ -39,6 +39,7 @@ Icon
 *.a
 *.dylib
 *.dSYM/
+build/
 
 # 环境 / 密钥
 .env
