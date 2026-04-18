@@ -1,0 +1,43 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "eb8af10ca4ae",
+  "session_id": "cc91ecb9-1743-4f12-8332-6c7b8d04fe86",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-18T14:34:02.079916Z",
+  "branch": "feature/persist-transcription-and-fix-vad-flush",
+  "checkpoints_count": 1,
+  "files_touched": [
+    ".factory/skills/kb-dev-workflow/SKILL.md",
+    "Sources/VoicePepper/App/AppDelegate.swift",
+    "Sources/VoicePepper/Services/AudioCaptureService.swift",
+    "Sources/VoicePepper/Services/RecordingFileService.swift",
+    "Sources/VoicePepper/UI/RecordingHistoryView.swift",
+    "Sources/VoicePepper/UI/StatusBarManager.swift",
+    "docs/solutions/logic-errors/vad-buffer-not-flushed-before-stop-2026-04-18.md",
+    "tests/e2e_test.py"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "29342d14e274",
+  "token_usage": {
+    "input_tokens": 1040,
+    "cache_creation_tokens": 254605,
+    "cache_read_tokens": 5877210,
+    "output_tokens": 27137,
+    "api_call_count": 69
+  },
+  "session_metrics": {
+    "turn_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-18T14:34:01.776102Z",
+    "agent_lines": 375,
+    "agent_removed": 0,
+    "human_added": 997,
+    "human_modified": 17,
+    "human_removed": 0,
+    "total_committed": 1389,
+    "total_lines_changed": 1389,
+    "agent_percentage": 26.997840172786177,
+    "metric_version": 2
+  }
+}

@@ -3,7 +3,7 @@
   "checkpoint_id": "eb8af10ca4ae",
   "strategy": "manual-commit",
   "branch": "feature/persist-transcription-and-fix-vad-flush",
-  "checkpoints_count": 2,
+  "checkpoints_count": 3,
   "files_touched": [
     ".factory/skills/kb-dev-workflow/SKILL.md",
     "Sources/VoicePepper/App/AppDelegate.swift",
@@ -51,13 +51,19 @@
       "transcript": "/eb/8af10ca4ae/2/full.jsonl",
       "content_hash": "/eb/8af10ca4ae/2/content_hash.txt",
       "prompt": "/eb/8af10ca4ae/2/prompt.txt"
+    },
+    {
+      "metadata": "/eb/8af10ca4ae/3/metadata.json",
+      "transcript": "/eb/8af10ca4ae/3/full.jsonl",
+      "content_hash": "/eb/8af10ca4ae/3/content_hash.txt",
+      "prompt": "/eb/8af10ca4ae/3/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 363,
-    "cache_creation_tokens": 340962,
-    "cache_read_tokens": 41010782,
-    "output_tokens": 135598,
-    "api_call_count": 231
+    "input_tokens": 1403,
+    "cache_creation_tokens": 595567,
+    "cache_read_tokens": 46887992,
+    "output_tokens": 162735,
+    "api_call_count": 300
   }
 }
