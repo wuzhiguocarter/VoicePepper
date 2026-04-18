@@ -302,7 +302,6 @@ if [[ "$ARCH" == "universal" ]]; then
     if [[ -d "$ARM64_DYLIBS/ggml-backends" && -d "$X86_64_DYLIBS/ggml-backends" ]]; then
         mkdir -p "$UNIVERSAL_DYLIBS/ggml-backends"
         for so in "$ARM64_DYLIBS/ggml-backends"/*.so; do
-            local name
             name="$(basename "$so")"
             if [[ -f "$X86_64_DYLIBS/ggml-backends/$name" ]]; then
                 lipo -create "$so" "$X86_64_DYLIBS/ggml-backends/$name" \
