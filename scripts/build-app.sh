@@ -169,30 +169,31 @@ fix_rpaths() {
 # ---------------------------------------------------------------------------
 sign_app() {
     local app_dir="$1"
+    local identity="${SIGN_IDENTITY:--}"  # Default to ad-hoc signing ("-")
 
-    if [[ -z "$SIGN_IDENTITY" ]]; then
-        log "WARNING: No signing identity provided. Skipping code signing."
-        log "         Use --sign <identity> to enable signing."
-        return 0
+    if [[ "$identity" == "-" ]]; then
+        log "Ad-hoc signing (no Developer ID configured)"
+    else
+        log "Signing with identity: $identity"
     fi
-
-    log "Signing $app_dir with identity: $SIGN_IDENTITY"
 
     # Sign each framework dylib first
     for dylib in "$app_dir/Contents/Frameworks"/*.dylib; do
         [[ -f "$dylib" ]] || continue
-        codesign --force --sign "$SIGN_IDENTITY" "$dylib"
+        codesign --force --sign "$identity" "$dylib"
     done
 
-    # Deep sign the .app bundle with entitlements and hardened runtime
-    codesign --deep --force --options runtime \
-        --sign "$SIGN_IDENTITY" \
-        --entitlements "$ENTITLEMENTS" \
-        "$app_dir"
+    # Sign the .app bundle with entitlements
+    # Use hardened runtime only with Developer ID (ad-hoc doesn't support notarization anyway)
+    local sign_opts=(--deep --force --sign "$identity" --entitlements "$ENTITLEMENTS")
+    if [[ "$identity" != "-" ]]; then
+        sign_opts+=(--options runtime)
+    fi
+    codesign "${sign_opts[@]}" "$app_dir"
 
     # Verify
     log "Verifying signature..."
-    codesign -v --verbose=4 "$app_dir"
+    codesign -v --verbose=4 "$app_dir" >&2
     log "Signature verified"
 }
 
