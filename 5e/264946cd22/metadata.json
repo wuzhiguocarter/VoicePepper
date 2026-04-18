@@ -1,0 +1,25 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "5e264946cd22",
+  "strategy": "manual-commit",
+  "branch": "feature/persist-transcription-and-fix-vad-flush",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "openspec/changes/macos-voice-recorder-widget/.openspec.yaml",
+    "openspec/changes/macos-voice-recorder-widget/design.md",
+    "openspec/changes/macos-voice-recorder-widget/proposal.md",
+    "openspec/changes/macos-voice-recorder-widget/specs/audio-capture/spec.md",
+    "openspec/changes/macos-voice-recorder-widget/specs/hotkey-control/spec.md",
+    "openspec/changes/macos-voice-recorder-widget/specs/whisper-transcription/spec.md",
+    "openspec/changes/macos-voice-recorder-widget/specs/widget-display/spec.md",
+    "openspec/changes/macos-voice-recorder-widget/tasks.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/5e/264946cd22/0/metadata.json",
+      "transcript": "/5e/264946cd22/0/full.jsonl",
+      "content_hash": "/5e/264946cd22/0/content_hash.txt",
+      "prompt": ""
+    }
+  ]
+}
