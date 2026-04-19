@@ -1,0 +1,18 @@
+{
+  "cli_version": "0.5.5",
+  "checkpoint_id": "6a00b2b078aa",
+  "strategy": "manual-commit",
+  "branch": "feat/speakerkit-realtime-phase2",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "Sources/VoicePepper/Services/WhisperKitASRService.swift"
+  ],
+  "sessions": [
+    {
+      "metadata": "/6a/00b2b078aa/0/metadata.json",
+      "transcript": "/6a/00b2b078aa/0/full.jsonl",
+      "content_hash": "/6a/00b2b078aa/0/content_hash.txt",
+      "prompt": ""
+    }
+  ]
+}
