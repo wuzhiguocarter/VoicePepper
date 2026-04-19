@@ -3,7 +3,7 @@
   "checkpoint_id": "55e0040a5306",
   "strategy": "manual-commit",
   "branch": "feature/persist-transcription-and-fix-vad-flush",
-  "checkpoints_count": 0,
+  "checkpoints_count": 2,
   "files_touched": [
     "Resources/AppIcon.icns",
     "Resources/Info.plist",
@@ -15,6 +15,19 @@
       "transcript": "/55/e0040a5306/0/full.jsonl",
       "content_hash": "/55/e0040a5306/0/content_hash.txt",
       "prompt": ""
+    },
+    {
+      "metadata": "/55/e0040a5306/1/metadata.json",
+      "transcript": "/55/e0040a5306/1/full.jsonl",
+      "content_hash": "/55/e0040a5306/1/content_hash.txt",
+      "prompt": "/55/e0040a5306/1/prompt.txt"
     }
-  ]
+  ],
+  "token_usage": {
+    "input_tokens": 26,
+    "cache_creation_tokens": 261924,
+    "cache_read_tokens": 635116,
+    "output_tokens": 8409,
+    "api_call_count": 17
+  }
 }
