@@ -15,6 +15,7 @@ VoicePepper 录音功能 E2E 测试
   python3 tests/recording_e2e_test.py
 """
 
+import os
 import sys
 import time
 
@@ -125,6 +126,7 @@ def wait_for(condition_fn, timeout=15, interval=0.5, desc="条件") -> bool:
 
 def main():
     print("\n=== VoicePepper 录音功能 E2E 测试 ===\n")
+    record_seconds = max(int(os.environ.get("VOICEPEPPER_RECORD_SECONDS", "3")), 1)
 
     # ── 准备：获取 VoicePepper AX 引用 ───────────────────────────────────────
     ws = AppKit.NSWorkspace.sharedWorkspace()
@@ -225,9 +227,9 @@ def main():
     timer_visible = any(":" in (t or "") for t in texts)  # "00:00" 格式
     check(timer_visible, "录音计时器显示（MM:SS 格式）")
 
-    # ── 测试 4: 录音 3 秒 ────────────────────────────────────────────────────
-    print("\n[4] 录音 3 秒（请对着麦克风说话）")
-    for i in range(3, 0, -1):
+    # ── 测试 4: 录音一段时间 ────────────────────────────────────────────────
+    print(f"\n[4] 录音 {record_seconds} 秒（请对着麦克风说话）")
+    for i in range(record_seconds, 0, -1):
         log(f"录音中... {i}s")
         time.sleep(1.0)
 

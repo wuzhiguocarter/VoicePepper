@@ -25,8 +25,8 @@ final class AudioCaptureService {
     let audioSegmentPublisher = PassthroughSubject<AudioSegment, Never>()
     /// Emits current RMS level 0..1 for waveform display
     let levelPublisher = PassthroughSubject<Float, Never>()
-    /// 录音会话结束时发出，携带本次会话全部 PCM 样本（所有 VAD 段合并）
-    let sessionEndPublisher = PassthroughSubject<[Float], Never>()
+    /// 录音会话结束时发出，携带本次会话完整音频和时间边界
+    let sessionEndPublisher = PassthroughSubject<RecordingSessionData, Never>()
 
     /// 当前录音会话累积的 PCM 样本（所有 VAD 段依次追加）
     private var sessionSamples: [Float] = []
@@ -35,6 +35,7 @@ final class AudioCaptureService {
     private var converter: AVAudioConverter?
     private let ringBuffer = AudioRingBuffer()           // 30min capacity
     private let vadDetector = VADDetector()
+    private var sessionStartedAt: Date?
 
     private weak var appState: AppState?
     private var cancellables = Set<AnyCancellable>()
@@ -78,6 +79,7 @@ final class AudioCaptureService {
                 DispatchQueue.main.async {
                     do {
                         try self?.startEngine()
+                        self?.sessionStartedAt = Date()
                         completion(nil)
                     } catch let err as AudioCaptureError {
                         completion(err)
@@ -111,9 +113,17 @@ final class AudioCaptureService {
         // 发出完整会话样本供持久化，然后清空缓冲
         let completedSession = sessionSamples
         if !completedSession.isEmpty {
-            sessionEndPublisher.send(completedSession)
+            let startedAt = sessionStartedAt ?? Date().addingTimeInterval(-Double(completedSession.count) / 16000.0)
+            sessionEndPublisher.send(
+                RecordingSessionData(
+                    samples: completedSession,
+                    startedAt: startedAt,
+                    endedAt: Date()
+                )
+            )
         }
         sessionSamples.removeAll()
+        sessionStartedAt = nil
 
         vadDetector.reset()
         ringBuffer.reset()

@@ -24,8 +24,7 @@ struct TranscriptionListView: View {
                         .padding(.vertical, 8)
                     }
                     .accessibilityIdentifier("transcriptionScrollView")
-                    // macOS 13 compatible onChange
-                    .onChange(of: appState.entries.count) { _ in
+                    .onChange(of: appState.entries.count) {
                         // Auto-scroll to latest (Task 6.3)
                         if let lastId = appState.entries.last?.id {
                             withAnimation(.easeOut(duration: 0.2)) {

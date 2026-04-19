@@ -163,11 +163,14 @@ def main():
     if focused:
         role = ax_attr(focused, "AXRole")
         log(f"AXFocusedWindow.AXRole = {role!r}")
-        # Check if focused window is the popover (AXPopover or AXWindow with transcriptionPopover inside)
-        all_focused = collect_elements(focused, depth=15)
-        focused_ids = {e["identifier"] for e in all_focused if e["identifier"]}
-        if "transcriptionPopover" in focused_ids:
+        # Newer SwiftUI popovers can expose the focused element directly as AXPopover.
+        if role == "AXPopover":
             popover_el = focused
+        else:
+            all_focused = collect_elements(focused, depth=15)
+            focused_ids = {e["identifier"] for e in all_focused if e["identifier"]}
+            if "transcriptionPopover" in focused_ids:
+                popover_el = focused
 
     # If not found in focused window, search all windows
     if popover_el is None:

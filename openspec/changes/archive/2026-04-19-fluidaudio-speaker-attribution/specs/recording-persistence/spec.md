@@ -1,10 +1,4 @@
-# Spec: recording-persistence
-
-## Purpose
-
-管理录音文件的持久化存储：将录音会话的 PCM 数据写入应用专属目录，并管理纯文本与结构化 transcript sidecar 文件。
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: 录音文件自动保存
 系统 SHALL 在每次录音会话结束后，将该会话的完整 Float32 PCM 数据写入 `~/Library/Application Support/VoicePepper/Recordings/` 目录，并为该录音保存相关的 transcript sidecar 文件。

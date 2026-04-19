@@ -65,7 +65,7 @@ struct RecordingHistoryView: View {
                     onRevealInFinder: { revealInFinder(item: item) },
                     onDelete: { service.delete(item: item) },
                     onViewTranscription: {
-                        selectedTranscriptionText = item.transcriptionText
+                        selectedTranscriptionText = item.preferredTranscriptionText
                         selectedTranscriptionDate = item.formattedDate
                     }
                 )
@@ -73,8 +73,8 @@ struct RecordingHistoryView: View {
             }
         }
         .listStyle(.plain)
-        .onChange(of: currentlyPlayingId) { newId in
-            if newId == nil {
+        .onChange(of: currentlyPlayingId) {
+            if currentlyPlayingId == nil {
                 player.stop()
             }
         }
@@ -131,10 +131,15 @@ private struct RecordingRowView: View {
                     Text(item.formattedDate)
                         .font(.callout)
                         .lineLimit(1)
+                    if item.transcriptJSONURL != nil {
+                        Image(systemName: "person.2.fill")
+                            .font(.caption2)
+                            .foregroundColor(.accentColor)
+                    }
                     if item.transcriptionURL != nil {
                         Image(systemName: "doc.text")
                             .font(.caption2)
-                            .foregroundColor(.accentColor)
+                            .foregroundColor(item.transcriptJSONURL != nil ? .secondary : .accentColor)
                     }
                 }
                 Text(item.formattedDuration)
@@ -155,14 +160,14 @@ private struct RecordingRowView: View {
             .accessibilityLabel(isPlaying ? "暂停" : "播放")
 
             // 查看转录文本按钮
-            if item.transcriptionURL != nil {
+            if item.preferredTranscriptionText != nil {
                 Button(action: onViewTranscription) {
                     Image(systemName: "doc.text")
                         .font(.body)
                         .foregroundColor(.accentColor)
                 }
                 .buttonStyle(.borderless)
-                .help("查看转录文本")
+                .help(item.transcriptJSONURL != nil ? "查看说话人分离转录" : "查看转录文本")
                 .accessibilityLabel("查看转录文本")
             }
 
