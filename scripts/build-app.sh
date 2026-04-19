@@ -109,6 +109,11 @@ assemble_app() {
     # Copy Info.plist
     cp "$INFO_PLIST" "$app_dir/Contents/Info.plist"
 
+    # Copy app icon
+    if [[ -f "$PROJECT_DIR/Resources/AppIcon.icns" ]]; then
+        cp "$PROJECT_DIR/Resources/AppIcon.icns" "$app_dir/Contents/Resources/AppIcon.icns"
+    fi
+
     # Copy dylibs to Frameworks/
     for dylib in "$dylib_dir"/*.dylib; do
         [[ -f "$dylib" ]] || continue
