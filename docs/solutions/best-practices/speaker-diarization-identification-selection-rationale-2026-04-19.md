@@ -1,5 +1,5 @@
 ---
-title: "Speaker Diarization / Identification 选型决策：VoicePepper 优先选择 FluidAudio，短期保留 whisper.cpp 增量演进"
+title: "Speaker Diarization / Identification 选型决策：VoicePepper 短期采用 FluidAudio，长期优先评估 WhisperKit + SpeakerKit"
 date: 2026-04-19
 category: best-practices
 module: transcription
@@ -21,6 +21,8 @@ related_components:
 tags:
   - speaker-diarization
   - speaker-identification
+  - whisperkit
+  - speakerkit
   - fluidaudio
   - whisper-cpp
   - pyannote
@@ -31,7 +33,7 @@ tags:
   - macos
 ---
 
-# Speaker Diarization / Identification 选型决策：VoicePepper 优先选择 FluidAudio，短期保留 whisper.cpp 增量演进
+# Speaker Diarization / Identification 选型决策：VoicePepper 短期采用 FluidAudio，长期优先评估 WhisperKit + SpeakerKit
 
 ## Context
 
@@ -93,7 +95,28 @@ Mic / BLE audio
 
 ## 候选方案对比
 
-### 1. FluidAudio
+### 1. WhisperKit + SpeakerKit
+
+**定位**：Apple Silicon 端侧实时 ASR + speaker diarization 组合，面向 iOS / macOS 本地离线推理。
+
+**优点**
+
+- Apple 平台栈一致性最强，适合作为统一端侧语音栈
+- `WhisperKit` 对实时 ASR 的定位比当前 `whisper.cpp` 更接近长期目标
+- `SpeakerKit` 与 `WhisperKit` 同属 Apple Silicon 端侧路线，协同关系清晰
+- 完全本地、ANE 加速、高隐私，符合 VoicePepper 的产品定位
+
+**缺点**
+
+- 需要重新评估与现有 `whisper.cpp` 实时链路的替换成本
+- 当前项目还没有围绕其完成真实工程落地与兼容性验证
+- 它解决的是 ASR + diarization 的长期统一栈，不等于 speaker identification 已完整解决
+
+**判断**
+
+如果目标是 **Apple Silicon 端侧统一语音栈**，这是 VoicePepper 更优先的**长期主方案候选**。
+
+### 2. FluidAudio
 
 **定位**：Apple 平台原生音频推理库，Swift 集成，支持本地 ASR / diarization / VAD，并朝 speaker embedding / identification 方向扩展。
 
@@ -112,9 +135,9 @@ Mic / BLE audio
 
 **判断**
 
-这是最适合作为 VoicePepper **长期主方案** 的候选。
+这是 VoicePepper **当前最现实的增量落地方案**，尤其适合作为 diarization 后处理能力先接入产品。
 
-### 2. pyannote-audio
+### 3. pyannote-audio
 
 **定位**：speaker diarization 学术和工程基准方案，适合做高质量离线 diarization 与 speaker embedding。
 
@@ -134,7 +157,7 @@ Mic / BLE audio
 
 适合做研究基线和离线验证，不适合作为 VoicePepper 的主集成方案。
 
-### 3. whisper-diarization
+### 4. whisper-diarization
 
 **定位**：`Whisper + pyannote` 的快捷入口。
 
@@ -153,7 +176,7 @@ Mic / BLE audio
 
 适合快速 POC，不适合正式选型。
 
-### 4. sherpa-onnx
+### 5. sherpa-onnx
 
 **定位**：全栈离线语音工具箱，覆盖 ASR / diarization / VAD / TTS 等能力。
 
@@ -173,7 +196,7 @@ Mic / BLE audio
 
 适合从零构建统一语音平台，不是 VoicePepper 当前阶段的最优路径。
 
-### 5. 3D-Speaker
+### 6. 3D-Speaker
 
 **定位**：更偏 speaker recognition / verification / diarization 的研究和工程框架。
 
@@ -192,7 +215,7 @@ Mic / BLE audio
 
 适合作为 speaker identification 方法参考，不适合作为 VoicePepper 主栈。
 
-### 6. Meetily
+### 7. Meetily
 
 **定位**：完整产品，不是底层能力库。
 
@@ -210,36 +233,39 @@ Mic / BLE audio
 
 ## 最终决策
 
-### 长期主方案：FluidAudio
+### 长期 Apple Silicon 主方案：WhisperKit + SpeakerKit
 
-VoicePepper 的长期主方案应优先选择 **FluidAudio**。
+如果以 Apple Silicon 设备上的**端侧实时 ASR + diarization 统一栈**为目标，VoicePepper 的长期优先方向应调整为 **WhisperKit + SpeakerKit**。
 
-原因不是它 stars 更多，而是它与项目约束高度一致：
+原因不是某个项目更热门，而是它更符合本文前面列出的关键约束：
 
-- **Swift / macOS 原生集成**：最贴合当前代码栈
+- **Apple 平台统一栈**：ASR 与 diarization 更接近同一体系内协同
 - **本地离线**：符合项目核心卖点
-- **Apple Silicon 路线**：CoreML / ANE 与产品未来方向一致
-- **能力闭环**：不仅能做 diarization，还能沿 speaker embedding / identification 继续演进
+- **Apple Silicon 路线**：ANE 加速与产品未来方向一致
+- **长期方向更明确**：比“继续维持 `whisper.cpp + 单独 speaker pipeline`”更像最终形态
 
-对于 VoicePepper 这种 Apple 原生、菜单栏、低延迟、本地隐私优先的应用，`FluidAudio` 的“栈一致性”比通用性更重要。
+对于 VoicePepper 这种 Apple 原生、菜单栏、低延迟、本地隐私优先的应用，`WhisperKit + SpeakerKit` 的统一端侧方向，比单独把 `FluidAudio` 视为长期终局更合理。
 
-### 短期交付策略：保留 whisper.cpp，先做增量演进
+### 当前工程落地方案：保留 whisper.cpp，先用 FluidAudio 增量演进
 
-虽然长期选型是 `FluidAudio`，但短期不建议直接推翻当前 `whisper.cpp` 链路。
+虽然长期路线调整为 `WhisperKit + SpeakerKit`，但当前不建议直接推翻已经稳定运行的 `whisper.cpp` 链路。
 
 当前最稳妥的路径是：
 
 ```text
 Phase 1
 保留现有 whisper.cpp 实时转录
-+ 增加会话结束后的 diarization 后处理
++ 使用 FluidAudio 增加会话结束后的 diarization 后处理
 + transcript 升级为结构化 speaker-attributed 结果
 
 Phase 2
 增加 speaker rename / speaker profile 存储
 
 Phase 3
-评估将 ASR + diarization + identification 统一迁移到 FluidAudio
+评估将 ASR + diarization 统一迁移到 WhisperKit + SpeakerKit
+
+Phase 4
+再为 speaker identification 单独补齐 enrollment / profile / embedding 方案
 ```
 
 这样做的原因：
@@ -247,6 +273,24 @@ Phase 3
 - 现有实时转录已经工作稳定，直接替换 ASR 风险高
 - diarization 更适合基于整段音频的全局后处理
 - 可以先升级数据模型和历史存储格式，不被推理引擎切换阻塞
+- `FluidAudio` 已经更适合作为当前阶段的过渡实现，而不是必须被视为长期终局
+
+### Speaker Identification 仍需单独决策
+
+即使长期路线转向 `WhisperKit + SpeakerKit`，也不能把它等同于“speaker identification 已经解决”。
+
+本文讨论的两个问题需要继续拆开看：
+
+- `Speaker Diarization`：谁在什么时候说话
+- `Speaker Identification`：把匿名 speaker 标签映射为具体人物
+
+`WhisperKit + SpeakerKit` 更像是在 Apple Silicon 端侧把 **ASR + diarization** 的长期基础设施补齐；  
+而 `speaker identification` 仍需要补充：
+
+- speaker profile / enrollment
+- embedding / voiceprint 存储
+- 跨会话匹配与阈值策略
+- 用户可编辑的人名映射
 
 ## 为什么不直接做“实时 speaker 标签”
 
@@ -325,7 +369,7 @@ SpeakerProfile
 目标：
 
 - 保留现有 `whisper.cpp` 实时转录
-- 会话结束后跑 speaker diarization
+- 会话结束后通过 `FluidAudio` 跑 speaker diarization
 - 历史记录展示 `SPEAKER_00 / 01`
 
 这一步不要求真正 identification。
@@ -350,7 +394,8 @@ SpeakerProfile
 
 当 speaker 能力被证明有持续价值后，再评估：
 
-- 是否将 `whisper.cpp` ASR 迁移到 `FluidAudio`
+- 是否将 `whisper.cpp` ASR 迁移到 `WhisperKit`
+- 是否将 diarization 统一迁移到 `SpeakerKit`
 - 是否统一使用一个 Apple 平台本地推理栈
 - 是否保留旧链路作为 fallback
 
@@ -382,6 +427,7 @@ SpeakerProfile
   - `Sources/VoicePepper/Services/RecordingFileService.swift`
 
 - 外部资料：
+  - WhisperKit / SpeakerKit（用户补充资料，Apple Silicon 端侧路线）
   - [FluidAudio](https://github.com/FluidInference/FluidAudio)
   - [pyannote-audio](https://github.com/pyannote/pyannote-audio)
   - [sherpa-onnx speaker diarization docs](https://k2-fsa.github.io/sherpa/onnx/speaker-diarization/index.html)
@@ -394,13 +440,15 @@ SpeakerProfile
 
 对于 VoicePepper：
 
-- **长期主方案**：选择 `FluidAudio`
-- **短期交付策略**：保留 `whisper.cpp`，先做 diarization 后处理和结构化 transcript
-- **演进顺序**：Diarization → Rename/Profile → Identification → 再评估统一迁移
+- **长期 Apple Silicon 主方案**：优先评估 `WhisperKit + SpeakerKit`
+- **当前工程落地方案**：保留 `whisper.cpp`，先用 `FluidAudio` 做 diarization 后处理和结构化 transcript
+- **Identification 边界**：不把 `SpeakerKit` 直接等同于 speaker ID 完整方案
+- **演进顺序**：FluidAudio Diarization MVP → Rename/Profile → Identification → 再评估迁移到 `WhisperKit + SpeakerKit`
 
 这条路径兼顾了：
 
 - 当前代码资产复用
 - 本地离线产品定位
 - Apple 平台原生体验
+- 长期统一端侧栈的可能性
 - 后续 speaker identification 的可扩展性

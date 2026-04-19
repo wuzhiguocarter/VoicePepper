@@ -24,6 +24,10 @@ let package = Package(
             url: "https://github.com/FluidInference/FluidAudio.git",
             exact: "0.12.4"
         ),
+        .package(
+            url: "https://github.com/argmaxinc/argmax-oss-swift.git",
+            from: "0.9.0"
+        ),
     ],
     targets: [
         // C bridge to system libwhisper (installed via `brew install whisper-cpp`)
@@ -68,6 +72,8 @@ let package = Package(
                 "COpus",
                 .product(name: "KeyboardShortcuts", package: "KeyboardShortcuts"),
                 .product(name: "FluidAudio", package: "FluidAudio"),
+                .product(name: "WhisperKit", package: "argmax-oss-swift"),
+                .product(name: "SpeakerKit", package: "argmax-oss-swift"),
             ],
             path: "Sources/VoicePepper",
             exclude: ["Resources/VoicePepper.entitlements"],

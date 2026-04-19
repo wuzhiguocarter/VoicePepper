@@ -24,6 +24,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var accessibilityMonitor: AccessibilityMonitor?
     private let recordingFileService = RecordingFileService()
     private let diarizationService = FluidAudioDiarizationService()
+    private var experimentalWhisperKitService: WhisperKitASRService?
+    private var experimentalSpeakerKitService: SpeakerKitDiarizationService?
+    private var timelineMerger: TimelineMerger?
 
     // BLE 录音笔服务
     let bleDeviceManager = BLEDeviceManager()
@@ -97,6 +100,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // 注入 RecordingFileService 到 AppState
         appState.recordingFileService = recordingFileService
         recordingFileService.loadRecordings()
+
+        if appState.speechPipelineMode == .experimentalArgmaxOSS {
+            experimentalWhisperKitService = WhisperKitASRService()
+            experimentalSpeakerKitService = SpeakerKitDiarizationService()
+            timelineMerger = TimelineMerger()
+            NSLog("[AppDelegate] Experimental speech pipeline enabled: WhisperKit + SpeakerKit")
+        }
 
         // Start model loading immediately on launch
         transcriptionSvc.start()

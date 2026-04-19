@@ -12,7 +12,7 @@
 - **THEN** 系统提示用户下载模型，并提供一键下载入口（从 Hugging Face 或 ggerganov CDN）
 
 ### Requirement: VAD 分段实时转录
-系统 SHALL 通过语音活动检测（VAD）将连续音频流分割为语音段，每段结束后立即触发转录，转录延迟不超过 3 秒。
+系统 SHALL 通过语音活动检测（VAD）将连续音频流分割为语音段，每段结束后立即触发转录，转录延迟不超过 3 秒。同时，系统 SHALL 在保持现有 `whisper.cpp` 主路径可用的前提下，为未来迁移到新的本地 ASR 引擎预留统一事件模型与实验性适配层。
 
 #### Scenario: 检测到语音停顿
 - **WHEN** 音频流中出现超过 500ms 的静默
@@ -25,6 +25,14 @@
 #### Scenario: 转录结果输出
 - **WHEN** whisper.cpp 完成一段音频转录
 - **THEN** 系统将转录文本（包含时间戳）通过 Combine Publisher 推送给 UI 层
+
+#### Scenario: 默认主路径保持不变
+- **WHEN** 应用正常启动且未启用实验性新栈
+- **THEN** 系统继续使用现有 `whisper.cpp` 转录链路，不改变当前 UI 与 E2E 行为
+
+#### Scenario: 实验性新栈可编译接入
+- **WHEN** 仓库引入 `WhisperKit`
+- **THEN** 应用能够编译通过，并通过独立适配层初始化实验性 ASR 引擎，而不要求立即切换默认主路径
 
 ### Requirement: Apple Silicon 硬件加速
 系统 SHALL 在 Apple Silicon 设备上启用 Metal GPU 加速，在 Intel 设备上使用 CPU 路径。
