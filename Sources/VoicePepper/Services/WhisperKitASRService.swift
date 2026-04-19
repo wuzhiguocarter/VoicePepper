@@ -1,26 +1,53 @@
 import Foundation
 import WhisperKit
 
-@available(macOS 14.0, *)
 actor WhisperKitASRService {
     private let config: WhisperKitConfig
     private var whisperKit: WhisperKit?
+    private var pendingTask: Task<Void, Never>?
+
+    private var callback: (@Sendable (ASRTranscriptEvent) -> Void)?
+
+    func setCallback(_ cb: @Sendable @escaping (ASRTranscriptEvent) -> Void) {
+        callback = cb
+    }
 
     init(config: WhisperKitConfig? = nil) {
         self.config = config ?? WhisperKitConfig(
             model: "tiny",
             verbose: false,
-            load: false,
-            download: false
+            load: true,
+            download: true
         )
     }
 
-    func prepareIfNeeded() async throws {
+    /// Enqueue a segment for serial transcription. Each call chains after the previous.
+    func enqueue(_ segment: AudioSegment) {
+        let previous = pendingTask
+        pendingTask = Task {
+            await previous?.value
+            await processSegment(segment)
+        }
+    }
+
+    private func processSegment(_ segment: AudioSegment) async {
+        do {
+            let events = try await transcribe(audioSamples: segment.samples)
+            let cb = callback
+            for event in events where !event.text.isEmpty {
+                cb?(event)
+            }
+        } catch {
+            NSLog("[WhisperKitASRService] 转录失败: %@", error.localizedDescription)
+        }
+    }
+
+    private func prepareIfNeeded() async throws {
         guard whisperKit == nil else { return }
         whisperKit = try await WhisperKit(config)
     }
 
-    func transcribe(audioSamples: [Float]) async throws -> [ASRTranscriptEvent] {
+    private func transcribe(audioSamples: [Float]) async throws -> [ASRTranscriptEvent] {
         try await prepareIfNeeded()
         guard let whisperKit else { return [] }
 

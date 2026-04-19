@@ -34,6 +34,14 @@
 - **WHEN** 仓库引入 `WhisperKit`
 - **THEN** 应用能够编译通过，并通过独立适配层初始化实验性 ASR 引擎，而不要求立即切换默认主路径
 
+#### Scenario: 实验性模式下 WhisperKit 完成转录
+- **WHEN** `SpeechPipelineMode` 为 `experimentalArgmaxOSS` 且录音中出现语音段
+- **THEN** 系统将该语音段提交给 `WhisperKitASRService`，模型完成推理后产出 `ASRTranscriptEvent`，文字出现在 Popover 中
+
+#### Scenario: 实验性模式首字延迟可接受
+- **WHEN** WhisperKit 模型已加载且第一段音频完成
+- **THEN** 转录结果在音频段结束后 5 秒内输出（Apple Silicon tiny 模型，含首段 overhead）
+
 ### Requirement: Apple Silicon 硬件加速
 系统 SHALL 在 Apple Silicon 设备上启用 Metal GPU 加速，在 Intel 设备上使用 CPU 路径。
 
