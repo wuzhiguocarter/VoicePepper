@@ -397,11 +397,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             NSLog("[AppDelegate] filePlayback: WhisperKit 模型未就绪")
             return
         }
-        guard let pathStr = UserDefaults.standard.string(forKey: "filePlaybackWAVPath") else {
-            NSLog("[AppDelegate] filePlayback: 未设置 filePlaybackWAVPath，请在 UserDefaults 中写入路径")
+        guard let url = appState.filePlaybackWAVURL else {
+            NSLog("[AppDelegate] filePlayback: 未选择 WAV 文件，请在偏好设置中选择")
             return
         }
-        let url = URL(fileURLWithPath: pathStr)
         appState.startRecording()
         Task { await audioFileSource.play(url: url) }
     }

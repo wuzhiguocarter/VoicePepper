@@ -3,10 +3,10 @@ import Combine
 
 // MARK: - Recording Source
 
-enum RecordingSource: String, Identifiable {
+enum RecordingSource: String, CaseIterable, Identifiable {
     case microphone = "microphone"
     case bluetoothRecorder = "bluetoothRecorder"
-    case filePlayback = "filePlayback" // dev/test only, not shown in UI
+    case filePlayback = "filePlayback"
 
     var id: String { rawValue }
 
@@ -17,10 +17,6 @@ enum RecordingSource: String, Identifiable {
         case .filePlayback: return "文件回放"
         }
     }
-}
-
-extension RecordingSource: CaseIterable {
-    static var allCases: [RecordingSource] { [.microphone, .bluetoothRecorder] }
 }
 
 enum SpeechPipelineMode: String, CaseIterable, Identifiable {
@@ -94,9 +90,13 @@ final class AppState: ObservableObject {
     @Published var micPermissionDenied: Bool = false
     @Published var accessibilityPermissionGranted: Bool = false
 
-    // BLE 录音笔
+    // 录音源
     @Published var recordingSource: RecordingSource {
         didSet { UserDefaults.standard.set(recordingSource.rawValue, forKey: "recordingSource") }
+    }
+    /// filePlayback 模式使用的 WAV 文件路径（持久化到 UserDefaults）
+    @Published var filePlaybackWAVURL: URL? {
+        didSet { UserDefaults.standard.set(filePlaybackWAVURL?.path, forKey: "filePlaybackWAVPath") }
     }
     @Published var bleConnectionState: BLEConnectionState = .disconnected
     @Published var bleBatteryLevel: Int? = nil      // 0-100, 110=充电中
@@ -130,6 +130,10 @@ final class AppState: ObservableObject {
 
         let storedSource = UserDefaults.standard.string(forKey: "recordingSource")
         recordingSource = storedSource.flatMap(RecordingSource.init(rawValue:)) ?? .microphone
+
+        if let storedPath = UserDefaults.standard.string(forKey: "filePlaybackWAVPath") {
+            filePlaybackWAVURL = URL(fileURLWithPath: storedPath)
+        }
     }
 
     // MARK: Computed
