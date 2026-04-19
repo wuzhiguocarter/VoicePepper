@@ -1,0 +1,49 @@
+{
+  "cli_version": "0.5.5",
+  "checkpoint_id": "d446e8505d89",
+  "session_id": "23b6c7c1-81bc-46d7-9dd4-91e497d7a44a",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-19T15:27:18.784925Z",
+  "branch": "feat/file-playback-eval-source",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "Sources/VoicePepper/App/AppDelegate.swift",
+    "Sources/VoicePepper/Models/AppState.swift",
+    "Sources/VoicePepper/Services/AudioFileSource.swift",
+    "tests/file_playback_eval.py"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-sonnet-4-6",
+  "turn_id": "16d14fae6a57",
+  "token_usage": {
+    "input_tokens": 10982,
+    "cache_creation_tokens": 595981,
+    "cache_read_tokens": 45539860,
+    "output_tokens": 166041,
+    "api_call_count": 419
+  },
+  "session_metrics": {
+    "turn_count": 12
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-19T15:27:18.718083Z",
+    "agent_lines": 298,
+    "agent_removed": 1,
+    "human_added": 271,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 569,
+    "total_lines_changed": 570,
+    "agent_percentage": 52.45614035087719,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0
+    }
+  ]
+}
