@@ -1,0 +1,62 @@
+{
+  "cli_version": "0.5.5",
+  "checkpoint_id": "fed0d7ccffc2",
+  "session_id": "23b6c7c1-81bc-46d7-9dd4-91e497d7a44a",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-19T14:30:57.455131Z",
+  "branch": "feat/speakerkit-realtime-phase2",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "Sources/VoicePepper/App/AppDelegate.swift",
+    "Sources/VoicePepper/Models/AppState.swift",
+    "Sources/VoicePepper/Services/RecordingFileService.swift",
+    "Sources/VoicePepper/Services/SpeakerKitDiarizationService.swift",
+    "Sources/VoicePepper/Services/WhisperKitASRService.swift",
+    "Sources/VoicePepper/UI/TranscriptionListView.swift",
+    "Sources/VoicePepper/UI/TranscriptionPopoverView.swift",
+    "openspec/specs/realtime-speech-pipeline/spec.md",
+    "openspec/specs/speaker-attributed-transcript/spec.md",
+    "openspec/specs/widget-display/spec.md"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-sonnet-4-6",
+  "turn_id": "3ef6bcce1682",
+  "token_usage": {
+    "input_tokens": 9851,
+    "cache_creation_tokens": 405419,
+    "cache_read_tokens": 24309526,
+    "output_tokens": 97893,
+    "api_call_count": 236
+  },
+  "session_metrics": {
+    "turn_count": 8
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-19T14:30:57.41261Z",
+    "agent_lines": 354,
+    "agent_removed": 43,
+    "human_added": 212,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 566,
+    "total_lines_changed": 609,
+    "agent_percentage": 65.1888341543514,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0
+    },
+    {
+      "checkpoint_number": 3,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0
+    }
+  ]
+}
