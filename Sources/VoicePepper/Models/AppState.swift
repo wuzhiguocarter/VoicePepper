@@ -76,8 +76,13 @@ final class AppState: ObservableObject {
 
     // Transcription
     @Published var entries: [TranscriptionEntry] = []
+    @Published var realtimeChunks: [RealtimeTranscriptChunk] = []
     @Published var isModelLoaded: Bool = false
     @Published var modelLoadError: String? = nil
+
+    // WhisperKit 模型状态（实验性模式专用）
+    @Published var isWhisperKitModelReady: Bool = false
+    @Published var whisperKitModelStatus: String = "正在准备 WhisperKit 模型..."
 
     // Errors
     @Published var micPermissionDenied: Bool = false
@@ -137,8 +142,13 @@ final class AppState: ObservableObject {
         entries.append(entry)
     }
 
+    func updateRealtimeChunks(_ chunks: [RealtimeTranscriptChunk]) {
+        realtimeChunks = chunks
+    }
+
     func clearSession() {
         entries.removeAll()
+        realtimeChunks.removeAll()
     }
 
     func startRecording() {

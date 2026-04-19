@@ -200,7 +200,7 @@ struct TranscriptionPopoverView: View {
                     .font(.caption)
             }
             .buttonStyle(.borderless)
-            .disabled(appState.entries.isEmpty)
+            .disabled(transcriptionIsEmpty)
             .accessibilityIdentifier("clearButton")
             .confirmationDialog(
                 "清除所有转录内容？",
@@ -216,8 +216,8 @@ struct TranscriptionPopoverView: View {
             Spacer()
 
             // Entry count
-            if !appState.entries.isEmpty {
-                Text("\(appState.entries.count) 条")
+            if !transcriptionIsEmpty {
+                Text("\(transcriptionCount) 条")
                     .font(.caption2)
                     .foregroundColor(.secondary)
             }
@@ -230,27 +230,44 @@ struct TranscriptionPopoverView: View {
                     .font(.caption)
             }
             .buttonStyle(.bordered)
-            .disabled(appState.entries.isEmpty)
+            .disabled(transcriptionIsEmpty)
             .accessibilityIdentifier("copyAllButton")
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
     }
 
+    // MARK: Helpers
+
+    private var transcriptionIsEmpty: Bool {
+        appState.speechPipelineMode == .experimentalArgmaxOSS
+            ? appState.realtimeChunks.isEmpty
+            : appState.entries.isEmpty
+    }
+
+    private var transcriptionCount: Int {
+        appState.speechPipelineMode == .experimentalArgmaxOSS
+            ? appState.realtimeChunks.count
+            : appState.entries.count
+    }
+
     // MARK: Copy Action (Task 6.6)
 
     private func copyAll() {
         NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(appState.allTranscriptionText, forType: .string)
-
-        // 200ms feedback
-        withAnimation {
-            showCopiedFeedback = true
+        let text: String
+        if appState.speechPipelineMode == .experimentalArgmaxOSS {
+            text = appState.realtimeChunks
+                .map { "[\($0.speakerLabel ?? "?")] \($0.text)" }
+                .joined(separator: "\n")
+        } else {
+            text = appState.allTranscriptionText
         }
+        NSPasteboard.general.setString(text, forType: .string)
+
+        withAnimation { showCopiedFeedback = true }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            withAnimation {
-                showCopiedFeedback = false
-            }
+            withAnimation { self.showCopiedFeedback = false }
         }
     }
 }

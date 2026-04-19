@@ -171,6 +171,70 @@ final class RecordingFileService: ObservableObject {
         }
     }
 
+    /// 实验性模式：用 TimelineMerger snapshot 的 RealtimeTranscriptChunk 列表落盘。
+    func saveWithRealtimeChunks(
+        session: RecordingSessionData,
+        chunks: [RealtimeTranscriptChunk],
+        sampleRate: Double = 16000
+    ) async {
+        guard !session.samples.isEmpty else { return }
+        let outputURL = makeOutputURL()
+        do {
+            let duration = try await Task.detached(priority: .utility) {
+                try Self.writeWAV(samples: session.samples, sampleRate: sampleRate, to: outputURL)
+            }.value
+
+            var txtURL: URL? = nil
+            if !chunks.isEmpty {
+                txtURL = Self.txtURL(for: outputURL)
+                let text = chunks.map { "[\($0.speakerLabel ?? "?")] \($0.text)" }.joined(separator: "\n")
+                try text.write(to: txtURL!, atomically: true, encoding: .utf8)
+            }
+
+            var transcriptJSONURL: URL? = nil
+            if !chunks.isEmpty {
+                let attrChunks = chunks.map { chunk in
+                    SpeakerAttributedTranscriptChunk(
+                        text: chunk.text,
+                        timestamp: session.startedAt.addingTimeInterval(chunk.startTimeSeconds),
+                        relativeTimeSeconds: chunk.startTimeSeconds,
+                        speakerLabel: chunk.speakerLabel,
+                        startTimeSeconds: chunk.startTimeSeconds,
+                        endTimeSeconds: chunk.endTimeSeconds
+                    )
+                }
+                let speakerLabels = Set(chunks.compactMap(\.speakerLabel))
+                let diarizationSegments = speakerLabels.map { label -> SpeakerDiarizationSegment in
+                    let matching = chunks.filter { $0.speakerLabel == label }
+                    let start = matching.map(\.startTimeSeconds).min() ?? 0
+                    let end = matching.map(\.endTimeSeconds).max() ?? 0
+                    return SpeakerDiarizationSegment(speakerLabel: label, startTimeSeconds: start, endTimeSeconds: end)
+                }
+                let document = SpeakerAttributedTranscriptDocument(
+                    fullText: chunks.map(\.text).joined(separator: "\n"),
+                    chunks: attrChunks,
+                    diarizationSegments: diarizationSegments,
+                    engineMetadata: SpeechEngineMetadata(asrEngine: "whisperkit", diarizationEngine: "speakerkit")
+                )
+                transcriptJSONURL = Self.transcriptJSONURL(for: outputURL)
+                try Self.writeTranscriptDocument(document, to: transcriptJSONURL!)
+            }
+
+            let item = RecordingItem(
+                id: UUID(),
+                url: outputURL,
+                duration: duration,
+                createdAt: Date(),
+                transcriptionURL: txtURL,
+                transcriptJSONURL: transcriptJSONURL
+            )
+            recordings.insert(item, at: 0)
+            NSLog("[RecordingFileService] 已保存(experimental): %@ (%.1fs, %d chunks)", outputURL.lastPathComponent, duration, chunks.count)
+        } catch {
+            NSLog("[RecordingFileService] 写盘失败: %@", error.localizedDescription)
+        }
+    }
+
     /// 根据录音文件 URL 推导配对的 .txt 文件 URL
     private static func txtURL(for recordingURL: URL) -> URL {
         let name = recordingURL.deletingPathExtension().lastPathComponent

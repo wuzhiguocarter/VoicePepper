@@ -103,15 +103,40 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         if appState.speechPipelineMode == .experimentalArgmaxOSS {
             let wkService = WhisperKitASRService()
+            let skService = SpeakerKitDiarizationService()
+            let merger = TimelineMerger()
             experimentalWhisperKitService = wkService
-            experimentalSpeakerKitService = SpeakerKitDiarizationService()
-            timelineMerger = TimelineMerger()
+            experimentalSpeakerKitService = skService
+            timelineMerger = merger
             NSLog("[AppDelegate] Experimental speech pipeline enabled: WhisperKit + SpeakerKit")
-            // 注入转录结果回调（Task 2.3）
+            // 注入模型加载状态回调 → AppState
+            Task {
+                await wkService.setModelReadyCallback { [weak self] ready, status in
+                    Task { @MainActor [weak self] in
+                        self?.appState.isWhisperKitModelReady = ready
+                        self?.appState.whisperKitModelStatus = status
+                    }
+                }
+            }
+            // 立即触发模型下载/预热，避免首次录音时懒加载造成延迟
+            Task { await wkService.prepareModel() }
+            // 注入 WhisperKit 转录回调 → TimelineMerger → AppState.realtimeChunks
             Task {
                 await wkService.setCallback { [weak self] event in
                     Task { @MainActor [weak self] in
                         self?.handleWhisperKitASREvent(event)
+                    }
+                }
+            }
+            // 注入 SpeakerKit diarization 回调 → TimelineMerger → AppState.realtimeChunks
+            Task {
+                await skService.setCallback { [weak self] events in
+                    Task { @MainActor [weak self] in
+                        guard let self else { return }
+                        for event in events {
+                            let chunks = await merger.applySpeakerEvent(event)
+                            self.appState.updateRealtimeChunks(chunks)
+                        }
                     }
                 }
             }
@@ -137,6 +162,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 if self.appState.speechPipelineMode == .experimentalArgmaxOSS,
                    let wk = self.experimentalWhisperKitService {
                     Task { await wk.enqueue(segment) }
+                    if let sk = self.experimentalSpeakerKitService {
+                        Task { await sk.enqueue(segment) }
+                    }
                 } else {
                     transcriptionSvc?.enqueue(segment)
                 }
@@ -149,13 +177,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .sink { [weak self] session in
                 guard let self else { return }
                 Task { @MainActor in
-                    await self.transcriptionService?.waitUntilIdle()
-                    let entries = self.appState.entries
-                    await self.recordingFileService.save(
-                        session: session,
-                        transcriptionEntries: entries,
-                        diarizationService: self.diarizationService
-                    )
+                    if self.appState.speechPipelineMode == .experimentalArgmaxOSS,
+                       let merger = self.timelineMerger {
+                        let chunks = await merger.snapshot()
+                        await self.recordingFileService.saveWithRealtimeChunks(
+                            session: session,
+                            chunks: chunks
+                        )
+                    } else {
+                        await self.transcriptionService?.waitUntilIdle()
+                        let entries = self.appState.entries
+                        await self.recordingFileService.save(
+                            session: session,
+                            transcriptionEntries: entries,
+                            diarizationService: self.diarizationService
+                        )
+                    }
                     self.appState.clearSession()
                 }
             }
@@ -300,6 +337,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func startMicRecording() {
+        // 实验性模式下，WhisperKit 模型未就绪时不开始录音
+        if appState.speechPipelineMode == .experimentalArgmaxOSS && !appState.isWhisperKitModelReady {
+            NSLog("[AppDelegate] WhisperKit 模型未就绪，无法开始录音: %@", appState.whisperKitModelStatus)
+            return
+        }
         audioCaptureService?.start { [weak self] error in
             Task { @MainActor in
                 if let error {
@@ -324,13 +366,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func handleWhisperKitASREvent(_ event: ASRTranscriptEvent) {
         guard !event.text.isEmpty else { return }
-        let duration = event.endTimeSeconds - event.startTimeSeconds
-        let entry = TranscriptionEntry(
-            text: event.text,
-            timestamp: Date(),
-            duration: max(duration, 0)
-        )
-        appState.appendEntry(entry)
+        if let merger = timelineMerger {
+            Task {
+                let chunks = await merger.applyASREvent(event, source: .microphone)
+                await MainActor.run { self.appState.updateRealtimeChunks(chunks) }
+            }
+        } else {
+            let duration = event.endTimeSeconds - event.startTimeSeconds
+            let entry = TranscriptionEntry(
+                text: event.text,
+                timestamp: Date(),
+                duration: max(duration, 0)
+            )
+            appState.appendEntry(entry)
+        }
     }
 
     // MARK: Preferences Window
