@@ -3,7 +3,7 @@
   "checkpoint_id": "6a00b2b078aa",
   "strategy": "manual-commit",
   "branch": "feat/speakerkit-realtime-phase2",
-  "checkpoints_count": 0,
+  "checkpoints_count": 1,
   "files_touched": [
     "Sources/VoicePepper/Services/WhisperKitASRService.swift"
   ],
@@ -13,6 +13,19 @@
       "transcript": "/6a/00b2b078aa/0/full.jsonl",
       "content_hash": "/6a/00b2b078aa/0/content_hash.txt",
       "prompt": ""
+    },
+    {
+      "metadata": "/6a/00b2b078aa/1/metadata.json",
+      "transcript": "/6a/00b2b078aa/1/full.jsonl",
+      "content_hash": "/6a/00b2b078aa/1/content_hash.txt",
+      "prompt": "/6a/00b2b078aa/1/prompt.txt"
     }
-  ]
+  ],
+  "token_usage": {
+    "input_tokens": 9954,
+    "cache_creation_tokens": 468222,
+    "cache_read_tokens": 36258445,
+    "output_tokens": 132099,
+    "api_call_count": 335
+  }
 }

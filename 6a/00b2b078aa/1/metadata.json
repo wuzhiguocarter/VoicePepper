@@ -1,0 +1,32 @@
+{
+  "cli_version": "0.5.5",
+  "checkpoint_id": "6a00b2b078aa",
+  "session_id": "23b6c7c1-81bc-46d7-9dd4-91e497d7a44a",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-19T15:05:11.847909Z",
+  "branch": "feat/speakerkit-realtime-phase2",
+  "checkpoints_count": 1,
+  "files_touched": [],
+  "agent": "Claude Code",
+  "model": "claude-sonnet-4-6",
+  "turn_id": "432d90c29448",
+  "token_usage": {
+    "input_tokens": 9954,
+    "cache_creation_tokens": 468222,
+    "cache_read_tokens": 36258445,
+    "output_tokens": 132099,
+    "api_call_count": 335
+  },
+  "session_metrics": {
+    "turn_count": 10
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0
+    }
+  ]
+}
