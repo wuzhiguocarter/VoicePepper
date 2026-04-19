@@ -1,0 +1,20 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "55e0040a5306",
+  "strategy": "manual-commit",
+  "branch": "feature/persist-transcription-and-fix-vad-flush",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "Resources/AppIcon.icns",
+    "Resources/Info.plist",
+    "scripts/build-app.sh"
+  ],
+  "sessions": [
+    {
+      "metadata": "/55/e0040a5306/0/metadata.json",
+      "transcript": "/55/e0040a5306/0/full.jsonl",
+      "content_hash": "/55/e0040a5306/0/content_hash.txt",
+      "prompt": ""
+    }
+  ]
+}
