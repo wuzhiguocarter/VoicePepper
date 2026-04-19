@@ -19,6 +19,7 @@ import subprocess
 import sys
 import time
 import wave
+from pathlib import Path
 
 # ── 路径配置 ─────────────────────────────────────────────────────────────────
 
@@ -30,6 +31,7 @@ CHINESE_M4A   = (
 )
 CHINESE_WAV   = "/tmp/test_input.wav"
 WHISPER_CLI   = "/opt/homebrew/bin/whisper-cli"
+RECORDINGS_DIR = os.path.expanduser("~/Library/Application Support/VoicePepper/Recordings")
 
 # ── 辅助函数 ──────────────────────────────────────────────────────────────────
 
@@ -43,17 +45,39 @@ def check(condition: bool, label: str):
 def log(msg): print(f"  → {msg}")
 
 
+def resolve_chinese_source() -> str:
+    """优先使用固定夹具；若缺失，则回退到最新录音样本。"""
+    if os.path.exists(CHINESE_M4A):
+        return CHINESE_M4A
+
+    recordings_dir = Path(RECORDINGS_DIR)
+    if recordings_dir.exists():
+        candidates = sorted(
+            list(recordings_dir.glob("*.wav")) + list(recordings_dir.glob("*.m4a")),
+            key=lambda p: p.stat().st_mtime,
+            reverse=True,
+        )
+        if candidates:
+            fallback = str(candidates[0])
+            log(f"固定中文夹具缺失，回退到最新录音: {fallback}")
+            return fallback
+
+    check(False, "存在可用的中文音频夹具（固定样本或最新录音）")
+    return ""
+
+
 def prepare_chinese_wav():
     """将 M4A 转换为 16kHz mono WAV（如需要）。"""
+    source_path = resolve_chinese_source()
     if os.path.exists(CHINESE_WAV):
         with wave.open(CHINESE_WAV) as f:
             if f.getnchannels() == 1 and f.getframerate() == 16000:
                 log(f"复用已有文件: {CHINESE_WAV}")
                 return
-    log("使用 ffmpeg 转换 M4A → 16kHz WAV (前30s)...")
+    log(f"使用 ffmpeg 转换音频 → 16kHz WAV (前30s): {source_path}")
     result = subprocess.run([
         "ffmpeg", "-y",
-        "-i", CHINESE_M4A,
+        "-i", source_path,
         "-t", "30",
         "-ar", "16000",
         "-ac", "1",

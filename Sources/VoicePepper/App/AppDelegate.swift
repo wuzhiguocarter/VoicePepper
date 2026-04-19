@@ -23,6 +23,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var transcriptionService: TranscriptionService?
     private var accessibilityMonitor: AccessibilityMonitor?
     private let recordingFileService = RecordingFileService()
+    private let diarizationService = FluidAudioDiarizationService()
 
     // BLE 录音笔服务
     let bleDeviceManager = BLEDeviceManager()
@@ -120,10 +121,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // 麦克风录音会话结束 → 持久化
         audioService.sessionEndPublisher
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] samples in
-                let entries = self?.appState.entries ?? []
-                self?.recordingFileService.save(samples: samples, transcriptionEntries: entries)
-                self?.appState.clearSession()
+            .sink { [weak self] session in
+                guard let self else { return }
+                Task { @MainActor in
+                    await self.transcriptionService?.waitUntilIdle()
+                    let entries = self.appState.entries
+                    await self.recordingFileService.save(
+                        session: session,
+                        transcriptionEntries: entries,
+                        diarizationService: self.diarizationService
+                    )
+                    self.appState.clearSession()
+                }
             }
             .store(in: &cancellables)
 
@@ -153,10 +162,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // BLE 录音会话结束 → 持久化
         bleSvc.sessionEndPublisher
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] samples in
-                let entries = self?.appState.entries ?? []
-                self?.recordingFileService.save(samples: samples, transcriptionEntries: entries)
-                self?.appState.clearSession()
+            .sink { [weak self] session in
+                guard let self else { return }
+                Task { @MainActor in
+                    await self.transcriptionService?.waitUntilIdle()
+                    let entries = self.appState.entries
+                    await self.recordingFileService.save(
+                        session: session,
+                        transcriptionEntries: entries,
+                        diarizationService: self.diarizationService
+                    )
+                    self.appState.clearSession()
+                }
             }
             .store(in: &cancellables)
 

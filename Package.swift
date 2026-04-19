@@ -10,7 +10,7 @@ let whisperLib = "\(homebrewPrefix)/lib"
 
 let package = Package(
     name: "VoicePepper",
-    platforms: [.macOS(.v13)],
+    platforms: [.macOS(.v14)],
     products: [
         .executable(name: "VoicePepper", targets: ["VoicePepper"]),
     ],
@@ -19,6 +19,10 @@ let package = Package(
         .package(
             url: "https://github.com/sindresorhus/KeyboardShortcuts",
             exact: "1.14.0"
+        ),
+        .package(
+            url: "https://github.com/FluidInference/FluidAudio.git",
+            exact: "0.12.4"
         ),
     ],
     targets: [
@@ -63,6 +67,7 @@ let package = Package(
                 "CWhisper",
                 "COpus",
                 .product(name: "KeyboardShortcuts", package: "KeyboardShortcuts"),
+                .product(name: "FluidAudio", package: "FluidAudio"),
             ],
             path: "Sources/VoicePepper",
             exclude: ["Resources/VoicePepper.entitlements"],

@@ -49,6 +49,18 @@ final class TranscriptionService {
         transcriptionQueue.cancelAllOperations()
     }
 
+    func waitUntilIdle() async {
+        await withCheckedContinuation { continuation in
+            transcriptionQueue.addBarrierBlock {
+                continuation.resume()
+            }
+        }
+
+        // `handleResult` appends entries on MainActor via Task; hop back once so pending
+        // UI-state mutations triggered by finished operations are observed before snapshotting.
+        await MainActor.run {}
+    }
+
     // MARK: - Enqueue Segment
 
     func enqueue(_ segment: AudioSegment) {

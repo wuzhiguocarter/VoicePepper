@@ -9,6 +9,7 @@ struct RecordingItem: Identifiable, Equatable {
     let duration: TimeInterval   // 秒
     let createdAt: Date
     let transcriptionURL: URL?   // 配对的 .txt 转录文本文件
+    let transcriptJSONURL: URL?  // 配对的结构化 transcript JSON 文件
 
     var formattedDate: String {
         let f = DateFormatter()
@@ -28,6 +29,18 @@ struct RecordingItem: Identifiable, Equatable {
     var transcriptionText: String? {
         guard let txtURL = transcriptionURL else { return nil }
         return try? String(contentsOf: txtURL, encoding: .utf8)
+    }
+
+    var speakerAttributedTranscript: SpeakerAttributedTranscriptDocument? {
+        guard let jsonURL = transcriptJSONURL else { return nil }
+        return RecordingFileService.loadTranscriptDocument(from: jsonURL)
+    }
+
+    var preferredTranscriptionText: String? {
+        if let structured = speakerAttributedTranscript?.formattedText, !structured.isEmpty {
+            return structured
+        }
+        return transcriptionText
     }
 
     static func == (lhs: RecordingItem, rhs: RecordingItem) -> Bool {
@@ -81,8 +94,17 @@ final class RecordingFileService: ObservableObject {
                     let createdAt = attrs?.contentModificationDate ?? Date()
                     let duration = Self.durationOf(url: url)
                     let txtURL = Self.txtURL(for: url)
+                    let jsonURL = Self.transcriptJSONURL(for: url)
                     let hasTranscription = FileManager.default.fileExists(atPath: txtURL.path)
-                    return RecordingItem(id: UUID(), url: url, duration: duration, createdAt: createdAt, transcriptionURL: hasTranscription ? txtURL : nil)
+                    let hasTranscriptJSON = FileManager.default.fileExists(atPath: jsonURL.path)
+                    return RecordingItem(
+                        id: UUID(),
+                        url: url,
+                        duration: duration,
+                        createdAt: createdAt,
+                        transcriptionURL: hasTranscription ? txtURL : nil,
+                        transcriptJSONURL: hasTranscriptJSON ? jsonURL : nil
+                    )
                 }
                 .sorted { $0.createdAt > $1.createdAt }
         } catch {
@@ -93,35 +115,59 @@ final class RecordingFileService: ObservableObject {
     // MARK: 保存
 
     /// 将整个会话的完整 PCM 样本异步写为一个 WAV 文件（合并所有 VAD 段）。
-    /// 同时将转录条目保存为同名 .txt 文件。
-    func save(samples: [Float], transcriptionEntries: [TranscriptionEntry] = [], sampleRate: Double = 16000) {
-        guard !samples.isEmpty else { return }
+    /// 同时将转录条目保存为同名 .txt 文件，并尽力生成结构化 transcript JSON。
+    func save(
+        session: RecordingSessionData,
+        transcriptionEntries: [TranscriptionEntry] = [],
+        diarizationService: FluidAudioDiarizationService? = nil,
+        sampleRate: Double = 16000
+    ) async {
+        guard !session.samples.isEmpty else { return }
         let outputURL = makeOutputURL()
-        Task { @MainActor [weak self] in
-            guard let self else { return }
-            do {
-                let duration = try await Task.detached(priority: .utility) {
-                    try Self.writeWAV(samples: samples, sampleRate: sampleRate, to: outputURL)
-                }.value
+        do {
+            let duration = try await Task.detached(priority: .utility) {
+                try Self.writeWAV(samples: session.samples, sampleRate: sampleRate, to: outputURL)
+            }.value
 
-                // 保存转录文本
-                var txtURL: URL? = nil
-                if !transcriptionEntries.isEmpty {
-                    txtURL = Self.txtURL(for: outputURL)
-                    let text = transcriptionEntries.map { entry in
-                        let f = DateFormatter()
-                        f.dateFormat = "HH:mm:ss"
-                        return "[\(f.string(from: entry.timestamp))] \(entry.text)"
-                    }.joined(separator: "\n")
-                    try text.write(to: txtURL!, atomically: true, encoding: .utf8)
-                }
-
-                let item = RecordingItem(id: UUID(), url: outputURL, duration: duration, createdAt: Date(), transcriptionURL: txtURL)
-                self.recordings.insert(item, at: 0)
-                NSLog("[RecordingFileService] 已保存: %@ (%.1fs)", outputURL.lastPathComponent, duration)
-            } catch {
-                NSLog("[RecordingFileService] 写盘失败: %@", error.localizedDescription)
+            var txtURL: URL? = nil
+            if !transcriptionEntries.isEmpty {
+                txtURL = Self.txtURL(for: outputURL)
+                let text = transcriptionEntries.map { entry in
+                    let f = DateFormatter()
+                    f.dateFormat = "HH:mm:ss"
+                    return "[\(f.string(from: entry.timestamp))] \(entry.text)"
+                }.joined(separator: "\n")
+                try text.write(to: txtURL!, atomically: true, encoding: .utf8)
             }
+
+            var transcriptJSONURL: URL? = nil
+            if let diarizationService, !transcriptionEntries.isEmpty {
+                do {
+                    if let transcript = try await diarizationService.buildTranscript(
+                        recordingURL: outputURL,
+                        transcriptionEntries: transcriptionEntries,
+                        session: session
+                    ) {
+                        transcriptJSONURL = Self.transcriptJSONURL(for: outputURL)
+                        try Self.writeTranscriptDocument(transcript, to: transcriptJSONURL!)
+                    }
+                } catch {
+                    NSLog("[RecordingFileService] diarization 失败，回退纯文本: %@", error.localizedDescription)
+                }
+            }
+
+            let item = RecordingItem(
+                id: UUID(),
+                url: outputURL,
+                duration: duration,
+                createdAt: Date(),
+                transcriptionURL: txtURL,
+                transcriptJSONURL: transcriptJSONURL
+            )
+            recordings.insert(item, at: 0)
+            NSLog("[RecordingFileService] 已保存: %@ (%.1fs)", outputURL.lastPathComponent, duration)
+        } catch {
+            NSLog("[RecordingFileService] 写盘失败: %@", error.localizedDescription)
         }
     }
 
@@ -129,6 +175,11 @@ final class RecordingFileService: ObservableObject {
     private static func txtURL(for recordingURL: URL) -> URL {
         let name = recordingURL.deletingPathExtension().lastPathComponent
         return recordingURL.deletingLastPathComponent().appendingPathComponent("\(name).txt")
+    }
+
+    static func transcriptJSONURL(for recordingURL: URL) -> URL {
+        let name = recordingURL.deletingPathExtension().lastPathComponent
+        return recordingURL.deletingLastPathComponent().appendingPathComponent("\(name).json")
     }
 
     // MARK: 删除
@@ -142,6 +193,9 @@ final class RecordingFileService: ObservableObject {
         // 同步删除配对的转录文本文件
         if let txtURL = item.transcriptionURL {
             try? FileManager.default.removeItem(at: txtURL)
+        }
+        if let jsonURL = item.transcriptJSONURL {
+            try? FileManager.default.removeItem(at: jsonURL)
         }
         recordings.removeAll { $0.id == item.id }
     }
@@ -160,6 +214,24 @@ final class RecordingFileService: ObservableObject {
         let sampleRate = audioFile.processingFormat.sampleRate
         guard sampleRate > 0 else { return 0 }
         return Double(audioFile.length) / sampleRate
+    }
+
+    private static func writeTranscriptDocument(
+        _ transcript: SpeakerAttributedTranscriptDocument,
+        to url: URL
+    ) throws {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        encoder.dateEncodingStrategy = .iso8601
+        let data = try encoder.encode(transcript)
+        try data.write(to: url, options: .atomic)
+    }
+
+    nonisolated static func loadTranscriptDocument(from url: URL) -> SpeakerAttributedTranscriptDocument? {
+        guard let data = try? Data(contentsOf: url) else { return nil }
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        return try? decoder.decode(SpeakerAttributedTranscriptDocument.self, from: data)
     }
 
     // MARK: 写盘（nonisolated，在后台线程调用）

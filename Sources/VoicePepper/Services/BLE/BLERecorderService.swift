@@ -10,8 +10,8 @@ final class BLERecorderService {
     let audioSegmentPublisher = PassthroughSubject<AudioSegment, Never>()
     /// 音频电平（0.0-1.0）供 UI 波形显示
     let levelPublisher = PassthroughSubject<Float, Never>()
-    /// 会话结束时发出全部 PCM 样本，供 RecordingFileService 持久化
-    let sessionEndPublisher = PassthroughSubject<[Float], Never>()
+    /// 会话结束时发出全部 PCM 样本和会话时间边界，供 RecordingFileService 持久化
+    let sessionEndPublisher = PassthroughSubject<RecordingSessionData, Never>()
 
     private let deviceManager: BLEDeviceManager
     private let protocol_ = BLEProtocol()
@@ -27,6 +27,7 @@ final class BLERecorderService {
     private let bufferThreshold = 16000 * 4
     /// 是否处于实时转写会话中
     private var isTranscribing = false
+    private var sessionStartedAt: Date?
 
     /// 调试用：原始 BLE 音频数据 dump 文件
     private var rawDumpHandle: FileHandle?
@@ -52,6 +53,7 @@ final class BLERecorderService {
         isTranscribing = true
         audioBuffer.removeAll()
         sessionSamples.removeAll()
+        sessionStartedAt = Date()
 
         // 调试：开始 dump 原始音频数据
         startRawDump()
@@ -307,9 +309,17 @@ final class BLERecorderService {
     private func emitSessionEnd() {
         let completed = sessionSamples
         if !completed.isEmpty {
-            sessionEndPublisher.send(completed)
+            let startedAt = sessionStartedAt ?? Date().addingTimeInterval(-Double(completed.count) / 16000.0)
+            sessionEndPublisher.send(
+                RecordingSessionData(
+                    samples: completed,
+                    startedAt: startedAt,
+                    endedAt: Date()
+                )
+            )
         }
         sessionSamples.removeAll()
+        sessionStartedAt = nil
     }
 
     // MARK: - Debug: Raw Audio Dump
