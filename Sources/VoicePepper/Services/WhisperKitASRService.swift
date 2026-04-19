@@ -14,7 +14,7 @@ actor WhisperKitASRService {
 
     init(config: WhisperKitConfig? = nil) {
         self.config = config ?? WhisperKitConfig(
-            model: "tiny",
+            model: "large-v3",
             verbose: false,
             load: true,
             download: true
@@ -42,9 +42,21 @@ actor WhisperKitASRService {
         }
     }
 
+    /// Eagerly download and load the model. Safe to call multiple times.
+    func prepareModel() async {
+        do {
+            try await prepareIfNeeded()
+            NSLog("[WhisperKitASRService] 模型预热完成")
+        } catch {
+            NSLog("[WhisperKitASRService] 模型预热失败: %@", error.localizedDescription)
+        }
+    }
+
     private func prepareIfNeeded() async throws {
         guard whisperKit == nil else { return }
+        NSLog("[WhisperKitASRService] 开始下载/加载模型: %@", config.model ?? "unknown")
         whisperKit = try await WhisperKit(config)
+        NSLog("[WhisperKitASRService] 模型加载成功")
     }
 
     private func transcribe(audioSamples: [Float]) async throws -> [ASRTranscriptEvent] {

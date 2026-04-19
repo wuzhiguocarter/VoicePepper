@@ -1,15 +1,32 @@
 import SwiftUI
 
-// MARK: - Transcription List (Task 6.3)
-// Scrollable list of transcription entries, auto-scrolls to latest.
+// MARK: - Transcription List
 
 struct TranscriptionListView: View {
     @EnvironmentObject var appState: AppState
 
     var body: some View {
         Group {
+            if appState.speechPipelineMode == .experimentalArgmaxOSS {
+                RealtimeChunkListView()
+                    .environmentObject(appState)
+            } else {
+                LegacyEntryListView()
+                    .environmentObject(appState)
+            }
+        }
+    }
+}
+
+// MARK: - Legacy Entry List (whisper.cpp 模式)
+
+private struct LegacyEntryListView: View {
+    @EnvironmentObject var appState: AppState
+
+    var body: some View {
+        Group {
             if appState.entries.isEmpty {
-                EmptyTranscriptionView()           // Task 6.8
+                EmptyTranscriptionView()
             } else {
                 ScrollViewReader { proxy in
                     ScrollView {
@@ -25,7 +42,6 @@ struct TranscriptionListView: View {
                     }
                     .accessibilityIdentifier("transcriptionScrollView")
                     .onChange(of: appState.entries.count) {
-                        // Auto-scroll to latest (Task 6.3)
                         if let lastId = appState.entries.last?.id {
                             withAnimation(.easeOut(duration: 0.2)) {
                                 proxy.scrollTo(lastId, anchor: .bottom)
@@ -38,7 +54,91 @@ struct TranscriptionListView: View {
     }
 }
 
-// MARK: - Entry Row
+// MARK: - Realtime Chunk List (实验性模式)
+
+private struct RealtimeChunkListView: View {
+    @EnvironmentObject var appState: AppState
+
+    var body: some View {
+        Group {
+            if appState.realtimeChunks.isEmpty {
+                EmptyTranscriptionView()
+            } else {
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        LazyVStack(alignment: .leading, spacing: 8) {
+                            ForEach(appState.realtimeChunks) { chunk in
+                                ChunkRowView(chunk: chunk)
+                                    .id(chunk.id)
+                                    .accessibilityIdentifier("transcriptionEntry-\(chunk.id)")
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                    }
+                    .accessibilityIdentifier("transcriptionScrollView")
+                    .onChange(of: appState.realtimeChunks.count) {
+                        if let lastId = appState.realtimeChunks.last?.id {
+                            withAnimation(.easeOut(duration: 0.2)) {
+                                proxy.scrollTo(lastId, anchor: .bottom)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Chunk Row (实验性模式带 speaker badge)
+
+struct ChunkRowView: View {
+    let chunk: RealtimeTranscriptChunk
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 8) {
+            Text(chunk.speakerLabel ?? "?")
+                .font(.caption2)
+                .fontWeight(.semibold)
+                .foregroundColor(.white)
+                .padding(.horizontal, 5)
+                .padding(.vertical, 2)
+                .background(speakerColor)
+                .cornerRadius(4)
+                .fixedSize()
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(chunk.text)
+                    .font(.body)
+                    .textSelection(.enabled)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .foregroundColor(chunk.isFinal ? .primary : .secondary)
+
+                Text(String(format: "%.1fs – %.1fs", chunk.startTimeSeconds, chunk.endTimeSeconds))
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            }
+        }
+        .padding(8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(NSColor.controlBackgroundColor))
+        .cornerRadius(6)
+    }
+
+    private var speakerColor: Color {
+        switch chunk.speakerLabel {
+        case "S0": return .blue
+        case "S1": return Color.orange
+        case "S2": return Color.purple
+        case "S3": return Color.green
+        case "S4": return Color.pink
+        case nil:  return Color.gray
+        default:   return Color.indigo
+        }
+    }
+}
+
+// MARK: - Entry Row (Legacy)
 
 private struct EntryRow: View {
     let entry: TranscriptionEntry
@@ -61,7 +161,7 @@ private struct EntryRow: View {
     }
 }
 
-// MARK: - Empty State (Task 6.8)
+// MARK: - Empty State
 
 struct EmptyTranscriptionView: View {
     @EnvironmentObject var appState: AppState

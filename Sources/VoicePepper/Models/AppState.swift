@@ -76,6 +76,7 @@ final class AppState: ObservableObject {
 
     // Transcription
     @Published var entries: [TranscriptionEntry] = []
+    @Published var realtimeChunks: [RealtimeTranscriptChunk] = []
     @Published var isModelLoaded: Bool = false
     @Published var modelLoadError: String? = nil
 
@@ -137,8 +138,13 @@ final class AppState: ObservableObject {
         entries.append(entry)
     }
 
+    func updateRealtimeChunks(_ chunks: [RealtimeTranscriptChunk]) {
+        realtimeChunks = chunks
+    }
+
     func clearSession() {
         entries.removeAll()
+        realtimeChunks.removeAll()
     }
 
     func startRecording() {

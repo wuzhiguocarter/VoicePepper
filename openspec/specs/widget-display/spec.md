@@ -1,4 +1,10 @@
-## ADDED Requirements
+# Spec: widget-display
+
+## Purpose
+
+在 macOS 状态栏提供 Popover 面板，实时展示转录内容，支持录音状态反馈、文本操作，并在实验性模式下展示带说话人标签的 chunk 列表。
+
+## Requirements
 
 ### Requirement: 状态栏图标与 Popover 面板
 系统 SHALL 在 macOS 状态栏显示一个图标，点击后展开 Popover 面板展示转录内容，图标样式应反映当前录音状态。
@@ -47,3 +53,18 @@
 #### Scenario: 音频电平波形
 - **WHEN** 录音进行中
 - **THEN** 面板显示实时音频电平波形图，反映当前音量，静默时波形趋于平线
+
+### Requirement: 实验性模式 Popover 展示说话人标签
+系统 SHALL 在实验性模式（`SpeechPipelineMode.experimentalArgmaxOSS`）下，Popover 面板展示 `RealtimeTranscriptChunk` 列表，每条 chunk 带有说话人 badge（如 `[S1]`），同时保持默认模式 Popover 行为不变。
+
+#### Scenario: 实验性模式展示说话人 badge
+- **WHEN** `SpeechPipelineMode` 为 `experimentalArgmaxOSS` 且 `AppState.realtimeChunks` 非空
+- **THEN** Popover 展示每条 chunk 的说话人标签（格式 `[S1]`、`[S2]`）和转录文字，不同说话人用颜色或视觉区分
+
+#### Scenario: chunk speakerLabel 为 nil 时回退展示
+- **WHEN** 某条 `RealtimeTranscriptChunk` 的 `speakerLabel` 为 nil（speaker 事件尚未到达）
+- **THEN** 该 chunk 展示转录文字，说话人位置显示占位符（如 `[?]`）或留空，不崩溃
+
+#### Scenario: 默认模式 Popover 不受影响
+- **WHEN** `SpeechPipelineMode` 为 `legacyWhisperCPP`
+- **THEN** Popover 展示行为与 Phase 1 前完全一致，使用 `AppState.entries` 纯文本列表
