@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.5.5",
+  "checkpoint_id": "03ad9bfc6edd",
+  "strategy": "manual-commit",
+  "branch": "whisperkit-speakerkit-realtime-pipeline-v2",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "docs/solutions/best-practices/speaker-diarization-identification-selection-rationale-2026-04-19.md",
+    "docs/solutions/best-practices/whisperkit-speakerkit-realtime-asr-diarization-migration-design-2026-04-19.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/03/ad9bfc6edd/0/metadata.json",
+      "transcript": "/03/ad9bfc6edd/0/full.jsonl",
+      "content_hash": "/03/ad9bfc6edd/0/content_hash.txt",
+      "prompt": "/03/ad9bfc6edd/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 12003935,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 11801472,
+    "output_tokens": 36742,
+    "api_call_count": 70
+  }
+}

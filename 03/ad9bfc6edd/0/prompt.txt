@@ -1,0 +1,13 @@
+刚才录音的时间比较短
+
+---
+
+/Users/wuzhiguo/obsidian-notes/📥 InBox/语音实时转录-Speaker-Diarization开源项目调研-20260419.md 参照"七、补充：WhisperKit + SpeakerKit（Apple Silicon 端侧）" 重新评估选型方案: "docs/solutions/best-practices/speaker-diarization-identification-selection-rationale-2026-04-19.md" 是否需要调整?
+
+---
+
+OK
+
+---
+
+基于WhisperKit + SpeakerKit 实时 ASR 和说话人分离** 改造方案设计, 写到 docs/*.md
