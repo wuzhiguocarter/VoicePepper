@@ -3,9 +3,10 @@ import Combine
 
 // MARK: - Recording Source
 
-enum RecordingSource: String, CaseIterable, Identifiable {
+enum RecordingSource: String, Identifiable {
     case microphone = "microphone"
     case bluetoothRecorder = "bluetoothRecorder"
+    case filePlayback = "filePlayback" // dev/test only, not shown in UI
 
     var id: String { rawValue }
 
@@ -13,8 +14,13 @@ enum RecordingSource: String, CaseIterable, Identifiable {
         switch self {
         case .microphone: return "麦克风"
         case .bluetoothRecorder: return "蓝牙录音笔"
+        case .filePlayback: return "文件回放"
         }
     }
+}
+
+extension RecordingSource: CaseIterable {
+    static var allCases: [RecordingSource] { [.microphone, .bluetoothRecorder] }
 }
 
 enum SpeechPipelineMode: String, CaseIterable, Identifiable {

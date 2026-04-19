@@ -27,6 +27,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var experimentalWhisperKitService: WhisperKitASRService?
     private var experimentalSpeakerKitService: SpeakerKitDiarizationService?
     private var timelineMerger: TimelineMerger?
+    private let audioFileSource = AudioFileSource()
 
     // BLE 录音笔服务
     let bleDeviceManager = BLEDeviceManager()
@@ -167,6 +168,39 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     }
                 } else {
                     transcriptionSvc?.enqueue(segment)
+                }
+            }
+            .store(in: &cancellables)
+
+        // filePlayback audio → WhisperKit + SpeakerKit（仅实验性模式）
+        audioFileSource.audioSegmentPublisher
+            .sink { [weak self] segment in
+                guard let self,
+                      self.appState.recordingSource == .filePlayback,
+                      self.appState.speechPipelineMode == .experimentalArgmaxOSS,
+                      let wk = self.experimentalWhisperKitService else { return }
+                Task { await wk.enqueue(segment) }
+                if let sk = self.experimentalSpeakerKitService {
+                    Task { await sk.enqueue(segment) }
+                }
+            }
+            .store(in: &cancellables)
+
+        // filePlayback 会话结束 → 持久化
+        audioFileSource.sessionEndPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] session in
+                guard let self else { return }
+                Task { @MainActor in
+                    if let merger = self.timelineMerger {
+                        let chunks = await merger.snapshot()
+                        await self.recordingFileService.saveWithRealtimeChunks(
+                            session: session,
+                            chunks: chunks
+                        )
+                    }
+                    self.appState.stopRecording()
+                    self.appState.clearSession()
                 }
             }
             .store(in: &cancellables)
@@ -323,6 +357,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             startMicRecording()
         case .bluetoothRecorder:
             startBLERecording()
+        case .filePlayback:
+            startFilePlayback()
         }
     }
 
@@ -332,6 +368,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             audioCaptureService?.stop()
         case .bluetoothRecorder:
             bleRecorderService?.stopRealtimeTranscription()
+        case .filePlayback:
+            audioFileSource.stop()
         }
         appState.stopRecording()
     }
@@ -351,6 +389,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 }
             }
         }
+    }
+
+    private func startFilePlayback() {
+        guard appState.speechPipelineMode == .experimentalArgmaxOSS,
+              appState.isWhisperKitModelReady else {
+            NSLog("[AppDelegate] filePlayback: WhisperKit 模型未就绪")
+            return
+        }
+        guard let pathStr = UserDefaults.standard.string(forKey: "filePlaybackWAVPath") else {
+            NSLog("[AppDelegate] filePlayback: 未设置 filePlaybackWAVPath，请在 UserDefaults 中写入路径")
+            return
+        }
+        let url = URL(fileURLWithPath: pathStr)
+        appState.startRecording()
+        Task { await audioFileSource.play(url: url) }
     }
 
     private func startBLERecording() {
