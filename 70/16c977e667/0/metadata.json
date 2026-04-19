@@ -1,0 +1,36 @@
+{
+  "cli_version": "0.5.5",
+  "checkpoint_id": "7016c977e667",
+  "session_id": "019da54a-5a5f-7ed1-aa72-e0499169b773",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-19T14:55:41.810219Z",
+  "branch": "feat/speakerkit-realtime-phase2",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "Sources/VoicePepper/App/AppDelegate.swift",
+    "Sources/VoicePepper/Models/AppState.swift",
+    "Sources/VoicePepper/Services/WhisperKitASRService.swift",
+    "Sources/VoicePepper/UI/TranscriptionListView.swift",
+    "scripts/download-whisperkit-models.sh"
+  ],
+  "agent": "Codex",
+  "model": "gpt-5.4",
+  "turn_id": "037acff89967",
+  "checkpoint_transcript_start": 1953,
+  "transcript_lines_at_start": 1953,
+  "session_metrics": {
+    "turn_count": 10
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-19T14:55:41.752126Z",
+    "agent_lines": 0,
+    "agent_removed": 0,
+    "human_added": 155,
+    "human_modified": 10,
+    "human_removed": 0,
+    "total_committed": 155,
+    "total_lines_changed": 165,
+    "agent_percentage": 0,
+    "metric_version": 2
+  }
+}
