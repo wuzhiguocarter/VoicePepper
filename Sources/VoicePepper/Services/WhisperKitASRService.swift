@@ -111,7 +111,7 @@ actor WhisperKitASRService {
         try await prepareIfNeeded()
         guard let whisperKit else { return [] }
 
-        let options = DecodingOptions(wordTimestamps: true)
+        let options = DecodingOptions(language: "zh", skipSpecialTokens: true, wordTimestamps: true)
         let results = try await whisperKit.transcribe(audioArray: audioSamples, decodeOptions: options)
 
         return results.flatMap { result in
