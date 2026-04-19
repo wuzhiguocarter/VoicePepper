@@ -1,0 +1,68 @@
+{
+  "cli_version": "0.5.5",
+  "checkpoint_id": "78a823591ef2",
+  "session_id": "23b6c7c1-81bc-46d7-9dd4-91e497d7a44a",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-19T13:58:10.282067Z",
+  "branch": "feat/whisperkit-asr-phase1",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "Sources/VoicePepper/App/AppDelegate.swift",
+    "Sources/VoicePepper/Services/WhisperKitASRService.swift",
+    "Sources/VoicePepper/UI/PreferencesView.swift",
+    "docs/solutions/best-practices/whisperkit-speakerkit-realtime-asr-diarization-migration-design-2026-04-19.md",
+    "openspec/specs/audio-capture/spec.md",
+    "openspec/specs/realtime-speech-pipeline/spec.md",
+    "openspec/specs/whisper-transcription/spec.md"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-sonnet-4-6",
+  "turn_id": "2bc5116a3ab3",
+  "checkpoint_transcript_start": 455,
+  "transcript_lines_at_start": 455,
+  "token_usage": {
+    "input_tokens": 6807,
+    "cache_creation_tokens": 144094,
+    "cache_read_tokens": 10194664,
+    "output_tokens": 34960,
+    "api_call_count": 79
+  },
+  "session_metrics": {
+    "turn_count": 4
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-19T13:58:10.257671Z",
+    "agent_lines": 159,
+    "agent_removed": 14,
+    "human_added": 240,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 399,
+    "total_lines_changed": 413,
+    "agent_percentage": 41.88861985472155,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0
+    },
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 264,
+      "agent_lines_removed": 5
+    },
+    {
+      "checkpoint_number": 3,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 340,
+      "agent_lines_removed": 14
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "cli_version": "0.5.5",
+  "checkpoint_id": "78a823591ef2",
+  "strategy": "manual-commit",
+  "branch": "feat/whisperkit-asr-phase1",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "Sources/VoicePepper/App/AppDelegate.swift",
+    "Sources/VoicePepper/Services/WhisperKitASRService.swift",
+    "Sources/VoicePepper/UI/PreferencesView.swift",
+    "docs/solutions/best-practices/whisperkit-speakerkit-realtime-asr-diarization-migration-design-2026-04-19.md",
+    "openspec/specs/audio-capture/spec.md",
+    "openspec/specs/realtime-speech-pipeline/spec.md",
+    "openspec/specs/whisper-transcription/spec.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/78/a823591ef2/0/metadata.json",
+      "transcript": "/78/a823591ef2/0/full.jsonl",
+      "content_hash": "/78/a823591ef2/0/content_hash.txt",
+      "prompt": "/78/a823591ef2/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 6807,
+    "cache_creation_tokens": 144094,
+    "cache_read_tokens": 10194664,
+    "output_tokens": 34960,
+    "api_call_count": 79
+  }
+}
