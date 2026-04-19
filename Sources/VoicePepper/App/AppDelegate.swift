@@ -109,6 +109,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             experimentalSpeakerKitService = skService
             timelineMerger = merger
             NSLog("[AppDelegate] Experimental speech pipeline enabled: WhisperKit + SpeakerKit")
+            // 注入模型加载状态回调 → AppState
+            Task {
+                await wkService.setModelReadyCallback { [weak self] ready, status in
+                    Task { @MainActor [weak self] in
+                        self?.appState.isWhisperKitModelReady = ready
+                        self?.appState.whisperKitModelStatus = status
+                    }
+                }
+            }
             // 立即触发模型下载/预热，避免首次录音时懒加载造成延迟
             Task { await wkService.prepareModel() }
             // 注入 WhisperKit 转录回调 → TimelineMerger → AppState.realtimeChunks
@@ -328,6 +337,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func startMicRecording() {
+        // 实验性模式下，WhisperKit 模型未就绪时不开始录音
+        if appState.speechPipelineMode == .experimentalArgmaxOSS && !appState.isWhisperKitModelReady {
+            NSLog("[AppDelegate] WhisperKit 模型未就绪，无法开始录音: %@", appState.whisperKitModelStatus)
+            return
+        }
         audioCaptureService?.start { [weak self] error in
             Task { @MainActor in
                 if let error {

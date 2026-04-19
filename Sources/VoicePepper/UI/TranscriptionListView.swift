@@ -180,6 +180,13 @@ struct EmptyTranscriptionView: View {
                     .font(.caption)
                     .foregroundColor(.red)
                     .multilineTextAlignment(.center)
+            } else if appState.speechPipelineMode == .experimentalArgmaxOSS && !appState.isWhisperKitModelReady {
+                Text(appState.whisperKitModelStatus)
+                    .font(.callout)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                ProgressView()
+                    .scaleEffect(0.8)
             } else if !appState.isModelLoaded {
                 Text("正在加载 Whisper 模型...")
                     .font(.callout)

@@ -80,6 +80,10 @@ final class AppState: ObservableObject {
     @Published var isModelLoaded: Bool = false
     @Published var modelLoadError: String? = nil
 
+    // WhisperKit 模型状态（实验性模式专用）
+    @Published var isWhisperKitModelReady: Bool = false
+    @Published var whisperKitModelStatus: String = "正在准备 WhisperKit 模型..."
+
     // Errors
     @Published var micPermissionDenied: Bool = false
     @Published var accessibilityPermissionGranted: Bool = false
