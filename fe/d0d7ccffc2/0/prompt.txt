@@ -11,3 +11,19 @@
 ---
 
 /kb-dev-workflow 继续
+
+---
+
+合并PR吧
+
+---
+
+按照 docs/solutions/best-practices/whisperkit-speakerkit-realtime-asr-diarization-migration-design-2026-04-19.md 继续下一步是什么?
+
+---
+
+WhisperKit+SpeakerKit 使用的是什么模型? 有模型管理界面吗?
+
+---
+
+WhisperKit使用largev3模型; 先做 Phase 2（SpeakerKit 接入）
