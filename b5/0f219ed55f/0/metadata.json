@@ -1,0 +1,52 @@
+{
+  "cli_version": "0.5.5",
+  "checkpoint_id": "b50f219ed55f",
+  "session_id": "23b6c7c1-81bc-46d7-9dd4-91e497d7a44a",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-19T17:12:03.176745Z",
+  "branch": "feat/file-playback-eval-source",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "Sources/VoicePepper/Services/WhisperKitASRService.swift"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-sonnet-4-6",
+  "turn_id": "484beef57141",
+  "token_usage": {
+    "input_tokens": 11387,
+    "cache_creation_tokens": 766164,
+    "cache_read_tokens": 49469069,
+    "output_tokens": 183973,
+    "api_call_count": 450
+  },
+  "session_metrics": {
+    "turn_count": 14
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-19T17:12:03.104646Z",
+    "agent_lines": 0,
+    "agent_removed": 0,
+    "human_added": 23,
+    "human_modified": 7,
+    "human_removed": 0,
+    "total_committed": 23,
+    "total_lines_changed": 32,
+    "agent_percentage": 0,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 2,
+      "user_lines_removed": 1,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        ".gitignore": 2
+      },
+      "user_removed_per_file": {
+        ".gitignore": 1
+      }
+    }
+  ]
+}

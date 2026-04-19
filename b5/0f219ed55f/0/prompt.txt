@@ -1,0 +1,89 @@
+/opsx:explore 下一步应该做什么?
+
+---
+
+/kb-dev-workflow 根据如上规划, 继续向下推进
+
+---
+
+/kb-dev-workflow 继续
+
+---
+
+/kb-dev-workflow 继续
+
+---
+
+合并PR吧
+
+---
+
+按照 docs/solutions/best-practices/whisperkit-speakerkit-realtime-asr-diarization-migration-design-2026-04-19.md 继续下一步是什么?
+
+---
+
+WhisperKit+SpeakerKit 使用的是什么模型? 有模型管理界面吗?
+
+---
+
+WhisperKit使用largev3模型; 先做 Phase 2（SpeakerKit 接入）
+
+---
+
+研发测试阶段提前下载WhisperKit large-v3 模型（~947MB）,不要等到启动时才下载
+
+---
+
+[Image #4]
+
+---
+
+OK, 那先把当前PR合并
+
+---
+
+/kb-dev-workflow  关于 旁路真实录音通道做可重复评估 的问题：
+
+  这是个值得做的工程改进，但我建议作为 Phase 3 单独的 change 来推进。核心设计如下：
+
+  filePlayback source
+      │
+      ├── AudioFileSource（读取 WAV → 16kHz PCM → AudioSegment chunks）
+      │
+      └── AppDelegate.audioSegmentPublisher（复用现有路由逻辑）
+              │
+              ├── WhisperKitASRService.enqueue()
+              └── SpeakerKitDiarizationService.enqueue()
+                      │
+                      └── TimelineMerger → RealtimeTranscriptChunk
+
+  三个实现步骤：
+  1. AudioFileSource：读取本地 WAV，按 1~2 秒 chunk 推 AudioSegment，模拟 VAD 分段
+  2. AppDelegate 新增 filePlayback 分支，与 microphone 并列
+  3. 评估脚本：对比 appState.realtimeChunks 输出文本与 AISHELL-1 ground truth 计算 WER/DER
+
+  推荐数据集优先级：AISHELL-1（中文，最匹配当前 zh 默认语言）> AMI（多人说话，适合验证 SpeakerKit DER）
+
+---
+
+允许用户自己在界面选择录音源, 支持 filePlayback 录音源; 支持用户通过文件系统选择文件路径
+
+---
+
+<task-notification>
+<task-id>a8f539f3213a51a7f</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-wuzhiguo-projects-VoicePepper/23b6c7c1-81bc-46d7-9dd4-91e497d7a44a/tasks/a8f539f3213a51a7f.output</output-file>
+<status>completed</status>
+<summary>Agent "下载 AISHELL-1 和 AMI 样例数据集" completed</summary>
+<result>You've hit your limit · resets 12am (Asia/Shanghai)</result>
+<usage><total_tokens>1332</total_tokens><tool_uses>35</tool_uses><duration_ms>776345</duration_ms></usage>
+</task-notification>
+
+---
+
+[Image #1] 刚才测试文件回放, 发现每一个chunk 切的很细, 不到1s的音频, 导致ASR效果极差
+
+---
+
+继续
