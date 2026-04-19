@@ -1,0 +1,53 @@
+{
+  "cli_version": "0.5.5",
+  "checkpoint_id": "a528c5dda189",
+  "session_id": "019da53a-0ac0-7a93-8d85-75fe3e89e8df",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-19T10:17:02.394101Z",
+  "branch": "feature/persist-transcription-and-fix-vad-flush",
+  "checkpoints_count": 1,
+  "files_touched": [
+    ".codex/skills/kb-dev-workflow/SKILL.md"
+  ],
+  "agent": "Codex",
+  "model": "gpt-5.4",
+  "turn_id": "26c0e4d026f0",
+  "token_usage": {
+    "input_tokens": 818775,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 730880,
+    "output_tokens": 8479,
+    "api_call_count": 16
+  },
+  "session_metrics": {
+    "turn_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-19T10:17:02.384346Z",
+    "agent_lines": 210,
+    "agent_removed": 0,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 210,
+    "total_lines_changed": 210,
+    "agent_percentage": 100,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0
+    },
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 210,
+      "agent_lines_removed": 0
+    }
+  ]
+}
