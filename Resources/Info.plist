@@ -38,6 +38,10 @@
     <key>NSBluetoothAlwaysUsageDescription</key>
     <string>VoicePepper 需要蓝牙权限以连接 BLE 录音笔设备，实现无线实时转写。</string>
 
+    <!-- App icon -->
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
+
     <!-- App category -->
     <key>LSApplicationCategoryType</key>
     <string>public.app-category.productivity</string>
