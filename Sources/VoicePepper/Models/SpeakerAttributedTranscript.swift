@@ -17,13 +17,15 @@ struct SpeakerAttributedTranscriptDocument: Codable, Equatable {
     let chunks: [SpeakerAttributedTranscriptChunk]
     let diarizationSegments: [SpeakerDiarizationSegment]
     let speakerCount: Int
+    let engineMetadata: SpeechEngineMetadata?
 
     init(
         schemaVersion: Int = 1,
         createdAt: Date = Date(),
         fullText: String,
         chunks: [SpeakerAttributedTranscriptChunk],
-        diarizationSegments: [SpeakerDiarizationSegment]
+        diarizationSegments: [SpeakerDiarizationSegment],
+        engineMetadata: SpeechEngineMetadata? = nil
     ) {
         self.schemaVersion = schemaVersion
         self.createdAt = createdAt
@@ -31,6 +33,7 @@ struct SpeakerAttributedTranscriptDocument: Codable, Equatable {
         self.chunks = chunks
         self.diarizationSegments = diarizationSegments
         self.speakerCount = Set(diarizationSegments.map(\.speakerLabel)).count
+        self.engineMetadata = engineMetadata
     }
 
     var formattedText: String {
@@ -97,5 +100,24 @@ struct SpeakerDiarizationSegment: Codable, Equatable, Identifiable {
 
     func contains(timeSeconds: Double) -> Bool {
         timeSeconds >= startTimeSeconds && timeSeconds <= endTimeSeconds
+    }
+}
+
+struct SpeechEngineMetadata: Codable, Equatable, Sendable {
+    let asrEngine: String
+    let diarizationEngine: String
+    let modelVersion: String?
+    let localeIdentifier: String?
+
+    init(
+        asrEngine: String,
+        diarizationEngine: String,
+        modelVersion: String? = nil,
+        localeIdentifier: String? = nil
+    ) {
+        self.asrEngine = asrEngine
+        self.diarizationEngine = diarizationEngine
+        self.modelVersion = modelVersion
+        self.localeIdentifier = localeIdentifier
     }
 }

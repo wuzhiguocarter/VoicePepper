@@ -17,6 +17,20 @@ enum RecordingSource: String, CaseIterable, Identifiable {
     }
 }
 
+enum SpeechPipelineMode: String, CaseIterable, Identifiable {
+    case legacyWhisperCPP = "legacyWhisperCPP"
+    case experimentalArgmaxOSS = "experimentalArgmaxOSS"
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .legacyWhisperCPP: return "whisper.cpp + FluidAudio"
+        case .experimentalArgmaxOSS: return "WhisperKit + SpeakerKit (Experimental)"
+        }
+    }
+}
+
 // MARK: - Recording State
 
 enum RecordingState: Equatable {
@@ -86,6 +100,9 @@ final class AppState: ObservableObject {
     @Published var selectedModel: WhisperModel {
         didSet { UserDefaults.standard.set(selectedModel.rawValue, forKey: "selectedModel") }
     }
+    @Published var speechPipelineMode: SpeechPipelineMode {
+        didSet { UserDefaults.standard.set(speechPipelineMode.rawValue, forKey: "speechPipelineMode") }
+    }
     @Published var vadSilenceThresholdMs: Int = 500
 
     // E2E 测试钩子：由 AppDelegate 注入，供 SwiftUI 按钮调用
@@ -96,6 +113,9 @@ final class AppState: ObservableObject {
     init() {
         let stored = UserDefaults.standard.string(forKey: "selectedModel")
         selectedModel = stored.flatMap(WhisperModel.init(rawValue:)) ?? .tiny
+
+        let storedPipeline = UserDefaults.standard.string(forKey: "speechPipelineMode")
+        speechPipelineMode = storedPipeline.flatMap(SpeechPipelineMode.init(rawValue:)) ?? .legacyWhisperCPP
 
         let storedSource = UserDefaults.standard.string(forKey: "recordingSource")
         recordingSource = storedSource.flatMap(RecordingSource.init(rawValue:)) ?? .microphone

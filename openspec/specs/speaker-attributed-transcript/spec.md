@@ -28,6 +28,10 @@
 - **WHEN** 系统写入 transcript JSON
 - **THEN** 每个 chunk 至少包含 `text`、`timestamp`、`speakerLabel` 字段，并允许存在 `speakerProfileID` 等可选字段
 
+#### Scenario: 结构化字段包含引擎元数据
+- **WHEN** 系统写入 transcript JSON
+- **THEN** sidecar 支持记录 `asrEngine`、`diarizationEngine`、`modelVersion` 等引擎元数据，用于比较不同本地推理栈
+
 ### Requirement: speaker 标签回填到实时转录条目
 系统 SHALL 将录音会话中的实时转录条目按时间顺序映射到 diarization 结果，并为每条文本分配一个 speaker 标签。
 

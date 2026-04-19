@@ -47,7 +47,11 @@ actor FluidAudioDiarizationService {
         return SpeakerAttributedTranscriptDocument(
             fullText: fullText,
             chunks: chunks,
-            diarizationSegments: diarizationSegments
+            diarizationSegments: diarizationSegments,
+            engineMetadata: SpeechEngineMetadata(
+                asrEngine: "whisper.cpp",
+                diarizationEngine: "FluidAudio"
+            )
         )
     }
 
