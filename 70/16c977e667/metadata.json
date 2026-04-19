@@ -3,7 +3,7 @@
   "checkpoint_id": "7016c977e667",
   "strategy": "manual-commit",
   "branch": "feat/speakerkit-realtime-phase2",
-  "checkpoints_count": 0,
+  "checkpoints_count": 2,
   "files_touched": [
     "Sources/VoicePepper/App/AppDelegate.swift",
     "Sources/VoicePepper/Models/AppState.swift",
@@ -17,6 +17,19 @@
       "transcript": "/70/16c977e667/0/full.jsonl",
       "content_hash": "/70/16c977e667/0/content_hash.txt",
       "prompt": ""
+    },
+    {
+      "metadata": "/70/16c977e667/1/metadata.json",
+      "transcript": "/70/16c977e667/1/full.jsonl",
+      "content_hash": "/70/16c977e667/1/content_hash.txt",
+      "prompt": "/70/16c977e667/1/prompt.txt"
     }
-  ]
+  ],
+  "token_usage": {
+    "input_tokens": 9940,
+    "cache_creation_tokens": 463199,
+    "cache_read_tokens": 34470939,
+    "output_tokens": 129197,
+    "api_call_count": 323
+  }
 }
