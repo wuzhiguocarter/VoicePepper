@@ -9,6 +9,9 @@ actor WhisperKitASRService {
     private var callback: (@Sendable (ASRTranscriptEvent) -> Void)?
     private var modelReadyCallback: (@Sendable (Bool, String) -> Void)?
 
+    /// 累计时间偏移（秒），每次 enqueue 时同步递增，用于将 chunk 内相对时间映射到全局时间轴
+    private var cumulativeTimeOffset: Double = 0
+
     func setCallback(_ cb: @Sendable @escaping (ASRTranscriptEvent) -> Void) {
         callback = cb
     }
@@ -17,22 +20,31 @@ actor WhisperKitASRService {
         modelReadyCallback = cb
     }
 
+    /// 新录音会话开始时调用，重置时间轴
+    func resetTimeline() {
+        cumulativeTimeOffset = 0
+    }
+
     init(modelName: String = "large-v3") {
         self.modelName = modelName
     }
 
     /// Enqueue a segment for serial transcription. Each call chains after the previous.
     func enqueue(_ segment: AudioSegment) {
+        // 在 enqueue 时同步捕获当前偏移，并立即递增（保证串行任务内偏移正确）
+        let timeOffset = cumulativeTimeOffset
+        cumulativeTimeOffset += Double(segment.samples.count) / 16000.0
+
         let previous = pendingTask
         pendingTask = Task {
             await previous?.value
-            await processSegment(segment)
+            await processSegment(segment, timeOffset: timeOffset)
         }
     }
 
-    private func processSegment(_ segment: AudioSegment) async {
+    private func processSegment(_ segment: AudioSegment, timeOffset: Double) async {
         do {
-            let events = try await transcribe(audioSamples: segment.samples)
+            let events = try await transcribe(audioSamples: segment.samples, timeOffset: timeOffset)
             let cb = callback
             for event in events where !event.text.isEmpty {
                 cb?(event)
@@ -107,7 +119,7 @@ actor WhisperKitASRService {
         return allExist ? folder.path : nil
     }
 
-    private func transcribe(audioSamples: [Float]) async throws -> [ASRTranscriptEvent] {
+    private func transcribe(audioSamples: [Float], timeOffset: Double = 0) async throws -> [ASRTranscriptEvent] {
         try await prepareIfNeeded()
         guard let whisperKit else { return [] }
 
@@ -118,8 +130,8 @@ actor WhisperKitASRService {
             result.segments.map { segment in
                 ASRTranscriptEvent(
                     id: UUID(),
-                    startTimeSeconds: Double(segment.start),
-                    endTimeSeconds: Double(segment.end),
+                    startTimeSeconds: Double(segment.start) + timeOffset,
+                    endTimeSeconds: Double(segment.end) + timeOffset,
                     text: segment.text.trimmingCharacters(in: .whitespacesAndNewlines),
                     isFinal: true
                 )

@@ -380,6 +380,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             NSLog("[AppDelegate] WhisperKit 模型未就绪，无法开始录音: %@", appState.whisperKitModelStatus)
             return
         }
+        // 新会话开始，重置 WhisperKit 时间轴
+        if let wk = experimentalWhisperKitService {
+            Task { await wk.resetTimeline() }
+        }
         audioCaptureService?.start { [weak self] error in
             Task { @MainActor in
                 if let error {
@@ -401,8 +405,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             NSLog("[AppDelegate] filePlayback: 未选择 WAV 文件，请在偏好设置中选择")
             return
         }
+        // 新会话开始，重置 WhisperKit 时间轴
+        if let wk = experimentalWhisperKitService {
+            Task { await wk.resetTimeline() }
+        }
         appState.startRecording()
-        Task { await audioFileSource.play(url: url) }
+        // filePlayback 使用 15s 大块，接近 Whisper 原生 30s 窗口，显著提升 ASR 质量
+        Task { await audioFileSource.play(url: url, chunkDuration: 15.0) }
     }
 
     private func startBLERecording() {
