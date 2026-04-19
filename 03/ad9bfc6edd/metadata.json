@@ -5,8 +5,22 @@
   "branch": "whisperkit-speakerkit-realtime-pipeline-v2",
   "checkpoints_count": 2,
   "files_touched": [
+    "Package.resolved",
+    "Package.swift",
+    "Sources/VoicePepper/App/AppDelegate.swift",
+    "Sources/VoicePepper/Models/AppState.swift",
+    "Sources/VoicePepper/Models/RealtimeSpeechPipeline.swift",
+    "Sources/VoicePepper/Models/SpeakerAttributedTranscript.swift",
+    "Sources/VoicePepper/Services/FluidAudioDiarizationService.swift",
+    "Sources/VoicePepper/Services/SpeakerKitDiarizationService.swift",
+    "Sources/VoicePepper/Services/TimelineMerger.swift",
+    "Sources/VoicePepper/Services/WhisperKitASRService.swift",
     "docs/solutions/best-practices/speaker-diarization-identification-selection-rationale-2026-04-19.md",
-    "docs/solutions/best-practices/whisperkit-speakerkit-realtime-asr-diarization-migration-design-2026-04-19.md"
+    "docs/solutions/best-practices/whisperkit-speakerkit-realtime-asr-diarization-migration-design-2026-04-19.md",
+    "docs/solutions/test-failures/status-bar-app-nohup-launch-instability-2026-04-19.md",
+    "openspec/specs/realtime-speech-pipeline/spec.md",
+    "openspec/specs/speaker-attributed-transcript/spec.md",
+    "openspec/specs/whisper-transcription/spec.md"
   ],
   "sessions": [
     {
@@ -14,13 +28,19 @@
       "transcript": "/03/ad9bfc6edd/0/full.jsonl",
       "content_hash": "/03/ad9bfc6edd/0/content_hash.txt",
       "prompt": "/03/ad9bfc6edd/0/prompt.txt"
+    },
+    {
+      "metadata": "/03/ad9bfc6edd/1/metadata.json",
+      "transcript": "/03/ad9bfc6edd/1/full.jsonl",
+      "content_hash": "/03/ad9bfc6edd/1/content_hash.txt",
+      "prompt": "/03/ad9bfc6edd/1/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 12003935,
-    "cache_creation_tokens": 0,
-    "cache_read_tokens": 11801472,
-    "output_tokens": 36742,
-    "api_call_count": 70
+    "input_tokens": 12004954,
+    "cache_creation_tokens": 85670,
+    "cache_read_tokens": 14471595,
+    "output_tokens": 52957,
+    "api_call_count": 122
   }
 }
