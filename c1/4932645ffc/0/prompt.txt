@@ -63,3 +63,7 @@ OK, 那先把当前PR合并
   3. 评估脚本：对比 appState.realtimeChunks 输出文本与 AISHELL-1 ground truth 计算 WER/DER
 
   推荐数据集优先级：AISHELL-1（中文，最匹配当前 zh 默认语言）> AMI（多人说话，适合验证 SpeakerKit DER）
+
+---
+
+允许用户自己在界面选择录音源, 支持 filePlayback 录音源; 支持用户通过文件系统选择文件路径
