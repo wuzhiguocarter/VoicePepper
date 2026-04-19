@@ -10,6 +10,18 @@ struct PreferencesView: View {
 
     var body: some View {
         Form {
+            // 语音引擎 Section
+            Section("语音引擎") {
+                Picker("转录引擎", selection: $appState.speechPipelineMode) {
+                    ForEach(SpeechPipelineMode.allCases) { mode in
+                        Text(mode.displayName).tag(mode)
+                    }
+                }
+                Text("切换引擎后请重启 App 生效。Experimental 模式首次使用需下载模型（约 150MB）。")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
             // 录音源 Section
             Section("录音源") {
                 Picker("当前录音源", selection: $appState.recordingSource) {

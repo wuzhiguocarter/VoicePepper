@@ -102,10 +102,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         recordingFileService.loadRecordings()
 
         if appState.speechPipelineMode == .experimentalArgmaxOSS {
-            experimentalWhisperKitService = WhisperKitASRService()
+            let wkService = WhisperKitASRService()
+            experimentalWhisperKitService = wkService
             experimentalSpeakerKitService = SpeakerKitDiarizationService()
             timelineMerger = TimelineMerger()
             NSLog("[AppDelegate] Experimental speech pipeline enabled: WhisperKit + SpeakerKit")
+            // 注入转录结果回调（Task 2.3）
+            Task {
+                await wkService.setCallback { [weak self] event in
+                    Task { @MainActor [weak self] in
+                        self?.handleWhisperKitASREvent(event)
+                    }
+                }
+            }
         }
 
         // Start model loading immediately on launch
@@ -121,10 +130,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.openPreferencesWindow()
         }
 
-        // Connect mic audio → transcription
+        // Connect mic audio → transcription（按 pipeline 模式路由）
         audioService.audioSegmentPublisher
-            .sink { [weak transcriptionSvc] segment in
-                transcriptionSvc?.enqueue(segment)
+            .sink { [weak self, weak transcriptionSvc] segment in
+                guard let self else { return }
+                if self.appState.speechPipelineMode == .experimentalArgmaxOSS,
+                   let wk = self.experimentalWhisperKitService {
+                    Task { await wk.enqueue(segment) }
+                } else {
+                    transcriptionSvc?.enqueue(segment)
+                }
             }
             .store(in: &cancellables)
 
@@ -303,6 +318,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         bleRecorderService?.startRealtimeTranscription()
         appState.startRecording()
+    }
+
+    // MARK: WhisperKit ASR Event Handler
+
+    private func handleWhisperKitASREvent(_ event: ASRTranscriptEvent) {
+        guard !event.text.isEmpty else { return }
+        let duration = event.endTimeSeconds - event.startTimeSeconds
+        let entry = TranscriptionEntry(
+            text: event.text,
+            timestamp: Date(),
+            duration: max(duration, 0)
+        )
+        appState.appendEntry(entry)
     }
 
     // MARK: Preferences Window

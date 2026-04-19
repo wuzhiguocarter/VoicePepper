@@ -27,7 +27,6 @@ tags:
   - architecture
   - macos
 ---
-
 # WhisperKit + SpeakerKit 实时 ASR 与说话人分离改造方案设计
 
 ## Context
@@ -166,7 +165,7 @@ struct AudioFrame: Sendable {
 - `AudioFrameClock`
 - `AudioFrameRingBuffer`
 
-这里的关键变化是：**VAD 不再是主驱动器，只是辅助信息**。  
+这里的关键变化是：**VAD 不再是主驱动器，只是辅助信息**。
 实时 ASR 和实时 diarization 都应该围绕连续 frame stream 工作。
 
 ### 2. WhisperKitASRService
@@ -192,7 +191,7 @@ struct ASRTranscriptEvent: Sendable {
 }
 ```
 
-不要把 WhisperKit 直接暴露给 UI。  
+不要把 WhisperKit 直接暴露给 UI。
 应用层只依赖 `ASRTranscriptEvent`。
 
 ### 3. SpeakerKitDiarizationService
@@ -217,8 +216,7 @@ struct SpeakerSegmentEvent: Sendable {
 }
 ```
 
-第一阶段不要追求“字级别 speaker attribution”，  
-只需要做到：
+第一阶段不要追求“字级别 speaker attribution”，只需要做到：
 
 - chunk 级别 speaker 归属
 - speaker label 在同一会话中尽量稳定
@@ -386,6 +384,27 @@ SpeakerProfile
 - 让 UI 实时文本来自 `WhisperKit`
 - 旧的 `.txt/.json` 持久化逻辑仍可继续使用
 - `SpeakerKit` 可暂时只做旁路验证，不先驱动 UI
+
+
+  Phase 1 真正需要做什么
+
+  当前音频路径（活跃）：
+  AudioCaptureService
+    ─ VAD 分段 ──────────────→ TranscriptionService
+                                      │
+                                WhisperContext (whisper.cpp)
+                                      │
+                                AppState.entries → UI
+
+  实验性路径（需接通）：
+  AudioCaptureService
+    ─ 音频帧 ───────────────→ WhisperKitASRService
+                                      │
+                                ASRTranscriptEvent
+                                      │
+                                TimelineMerger
+                                      │
+                              RealtimeTranscriptChunk → AppState → UI
 
 ### Phase 2：SpeakerKit 接入实时 speaker timeline
 
