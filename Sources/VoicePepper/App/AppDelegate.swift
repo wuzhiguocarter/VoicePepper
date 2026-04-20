@@ -372,6 +372,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         case .filePlayback:
             audioFileSource.stop()
         }
+        // 强制刷新 WhisperKit accumulation buffer 中尚未满 10s 的剩余音频
+        if let wk = experimentalWhisperKitService {
+            Task { await wk.flush() }
+        }
         appState.stopRecording()
     }
 

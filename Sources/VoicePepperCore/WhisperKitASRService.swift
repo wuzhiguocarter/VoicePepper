@@ -15,6 +15,13 @@ public actor WhisperKitASRService {
     /// 转录语言，默认中文
     private let language: String
 
+    // MARK: - Accumulation buffer
+    // WhisperKit 在短音频（<5s）上产生严重幻觉，必须累积到足够长度后再推断。
+    // 默认 10 秒（160,000 samples @ 16kHz）。
+    private var accumulatedSamples: [Float] = []
+    private var batchStartOffset: Double = 0
+    private let minChunkSamples: Int = 16000 * 10
+
     public func setCallback(_ cb: @Sendable @escaping (ASRTranscriptEvent) -> Void) {
         callback = cb
     }
@@ -23,9 +30,16 @@ public actor WhisperKitASRService {
         modelReadyCallback = cb
     }
 
-    /// 新录音会话开始时调用，重置时间轴
+    /// 新录音会话开始时调用，重置时间轴和 accumulation buffer
     public func resetTimeline() {
         cumulativeTimeOffset = 0
+        accumulatedSamples = []
+        batchStartOffset = 0
+    }
+
+    /// 强制提交 accumulation buffer 中尚未处理的样本（录音停止时调用）
+    public func flush() {
+        submitAccumulated()
     }
 
     /// 等待所有待处理转录任务完成
@@ -38,15 +52,33 @@ public actor WhisperKitASRService {
         self.language = language
     }
 
-    /// Enqueue a segment for serial transcription. Each call chains after the previous.
+    /// Enqueue a segment for serial transcription.
+    /// Samples are accumulated until minChunkSamples is reached to avoid
+    /// hallucinations from feeding WhisperKit sub-5s audio fragments.
     public func enqueue(_ segment: AudioSegment) {
-        let timeOffset = cumulativeTimeOffset
+        if accumulatedSamples.isEmpty {
+            batchStartOffset = cumulativeTimeOffset
+        }
+        accumulatedSamples.append(contentsOf: segment.samples)
         cumulativeTimeOffset += Double(segment.samples.count) / 16000.0
+
+        guard accumulatedSamples.count >= minChunkSamples else { return }
+        submitAccumulated()
+    }
+
+    private func submitAccumulated() {
+        guard !accumulatedSamples.isEmpty else { return }
+        let samples = accumulatedSamples
+        let offset = batchStartOffset
+        accumulatedSamples = []
 
         let previous = pendingTask
         pendingTask = Task {
             await previous?.value
-            await processSegment(segment, timeOffset: timeOffset)
+            await processSegment(
+                AudioSegment(samples: samples, capturedAt: Date()),
+                timeOffset: offset
+            )
         }
     }
 
