@@ -1,0 +1,33 @@
+{
+  "cli_version": "0.5.5",
+  "checkpoint_id": "88916cd602d7",
+  "session_id": "019da54a-5a5f-7ed1-aa72-e0499169b773",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-20T07:05:48.960099Z",
+  "branch": "feat/eval-pipeline",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "scripts/eval_pipeline.py",
+    "tests/test_eval_pipeline.py"
+  ],
+  "agent": "Codex",
+  "model": "gpt-5.4",
+  "turn_id": "037acff89967",
+  "checkpoint_transcript_start": 1953,
+  "transcript_lines_at_start": 1953,
+  "session_metrics": {
+    "turn_count": 10
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-20T07:05:48.901603Z",
+    "agent_lines": 0,
+    "agent_removed": 0,
+    "human_added": 232,
+    "human_modified": 1,
+    "human_removed": 0,
+    "total_committed": 232,
+    "total_lines_changed": 233,
+    "agent_percentage": 0,
+    "metric_version": 2
+  }
+}
