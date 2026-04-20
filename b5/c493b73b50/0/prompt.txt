@@ -180,3 +180,7 @@ ok
 ---
 
 /kb-dev-workflow 评估pipeline有充分测试吗? 之前的功能有回归测试吗?
+
+---
+
+/kb-crm-cli 补充如上提到测试缺口
