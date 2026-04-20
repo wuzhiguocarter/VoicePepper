@@ -3,7 +3,7 @@
   "checkpoint_id": "1792ddeccba2",
   "strategy": "manual-commit",
   "branch": "feat/eval-pipeline",
-  "checkpoints_count": 0,
+  "checkpoints_count": 2,
   "files_touched": [
     "Sources/VoicePepper/App/AppDelegate.swift",
     "Sources/VoicePepperCore/WhisperKitASRService.swift"
@@ -14,6 +14,19 @@
       "transcript": "/17/92ddeccba2/0/full.jsonl",
       "content_hash": "/17/92ddeccba2/0/content_hash.txt",
       "prompt": ""
+    },
+    {
+      "metadata": "/17/92ddeccba2/1/metadata.json",
+      "transcript": "/17/92ddeccba2/1/full.jsonl",
+      "content_hash": "/17/92ddeccba2/1/content_hash.txt",
+      "prompt": "/17/92ddeccba2/1/prompt.txt"
     }
-  ]
+  ],
+  "token_usage": {
+    "input_tokens": 23670,
+    "cache_creation_tokens": 1709407,
+    "cache_read_tokens": 78928240,
+    "output_tokens": 331944,
+    "api_call_count": 711
+  }
 }
