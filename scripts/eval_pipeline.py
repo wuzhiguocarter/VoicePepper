@@ -314,7 +314,7 @@ def write_outputs(results: list, run_dir: Path, elapsed: float):
         json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8"
     )
 
-    fields = ["id", "wer", "edits", "ref_len", "status", "reference", "hypothesis", "error"]
+    fields = ["id", "wav", "wer", "edits", "ref_len", "status", "reference", "hypothesis", "error"]
     with open(run_dir / "samples.csv", "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=fields)
         w.writeheader()
