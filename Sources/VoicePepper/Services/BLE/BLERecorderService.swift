@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import VoicePepperCore
 
 // MARK: - BLE Recorder Service
 

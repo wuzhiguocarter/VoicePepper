@@ -1,17 +1,17 @@
 import Foundation
 import SpeakerKit
 
-actor SpeakerKitDiarizationService {
+public actor SpeakerKitDiarizationService {
     private let config: PyannoteConfig
     private var speakerKit: SpeakerKit?
     private var pendingTask: Task<Void, Never>?
     private var callback: (@Sendable ([SpeakerSegmentEvent]) -> Void)?
 
-    func setCallback(_ cb: @Sendable @escaping ([SpeakerSegmentEvent]) -> Void) {
+    public func setCallback(_ cb: @Sendable @escaping ([SpeakerSegmentEvent]) -> Void) {
         callback = cb
     }
 
-    init(config: PyannoteConfig? = nil) {
+    public init(config: PyannoteConfig? = nil) {
         self.config = config ?? PyannoteConfig(
             download: true,
             load: true,
@@ -19,8 +19,13 @@ actor SpeakerKitDiarizationService {
         )
     }
 
+    /// 等待所有待处理 diarization 任务完成
+    public func waitUntilIdle() async {
+        await pendingTask?.value
+    }
+
     /// Enqueue a segment for serial diarization. Each call chains after the previous.
-    func enqueue(_ segment: AudioSegment) {
+    public func enqueue(_ segment: AudioSegment) {
         let previous = pendingTask
         pendingTask = Task {
             await previous?.value
@@ -45,7 +50,7 @@ actor SpeakerKitDiarizationService {
         speakerKit = try await SpeakerKit(config)
     }
 
-    func diarize(audioSamples: [Float]) async throws -> [SpeakerSegmentEvent] {
+    public func diarize(audioSamples: [Float]) async throws -> [SpeakerSegmentEvent] {
         try await prepareIfNeeded()
         guard let speakerKit else { return [] }
 

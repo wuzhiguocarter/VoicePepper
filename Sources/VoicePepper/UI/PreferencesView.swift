@@ -1,6 +1,7 @@
 import SwiftUI
 import KeyboardShortcuts
 import UniformTypeIdentifiers
+import VoicePepperCore
 
 // MARK: - Preferences View
 

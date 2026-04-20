@@ -1,10 +1,12 @@
 import Foundation
 
-actor TimelineMerger {
+public actor TimelineMerger {
     private var chunks: [RealtimeTranscriptChunk] = []
     private var speakerEvents: [SpeakerSegmentEvent] = []
 
-    func applyASREvent(
+    public init() {}
+
+    public func applyASREvent(
         _ event: ASRTranscriptEvent,
         source: RecordingSource
     ) -> [RealtimeTranscriptChunk] {
@@ -39,7 +41,7 @@ actor TimelineMerger {
         return chunks
     }
 
-    func applySpeakerEvent(_ event: SpeakerSegmentEvent) -> [RealtimeTranscriptChunk] {
+    public func applySpeakerEvent(_ event: SpeakerSegmentEvent) -> [RealtimeTranscriptChunk] {
         if !speakerEvents.contains(where: { $0.id == event.id }) {
             speakerEvents.append(event)
         }
@@ -55,7 +57,7 @@ actor TimelineMerger {
         return chunks
     }
 
-    func snapshot() -> [RealtimeTranscriptChunk] {
+    public func snapshot() -> [RealtimeTranscriptChunk] {
         chunks
     }
 

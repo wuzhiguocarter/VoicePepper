@@ -2,6 +2,7 @@ import AppKit
 import SwiftUI
 import Combine
 import KeyboardShortcuts
+import VoicePepperCore
 
 // MARK: - KeyboardShortcuts Name (Task 3.1)
 

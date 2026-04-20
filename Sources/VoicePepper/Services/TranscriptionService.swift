@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import VoicePepperCore
 
 // MARK: - Transcription Service
 // Receives AudioSegments, queues them for serial whisper.cpp transcription,

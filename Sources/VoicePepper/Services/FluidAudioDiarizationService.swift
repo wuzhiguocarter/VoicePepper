@@ -1,5 +1,6 @@
 import Foundation
 import FluidAudio
+import VoicePepperCore
 
 @available(macOS 14.0, *)
 actor FluidAudioDiarizationService {

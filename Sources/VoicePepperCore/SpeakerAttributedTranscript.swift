@@ -1,25 +1,31 @@
 import Foundation
 
-struct RecordingSessionData: Sendable {
-    let samples: [Float]
-    let startedAt: Date
-    let endedAt: Date
+public struct RecordingSessionData: Sendable {
+    public let samples: [Float]
+    public let startedAt: Date
+    public let endedAt: Date
 
-    var duration: TimeInterval {
+    public var duration: TimeInterval {
         max(endedAt.timeIntervalSince(startedAt), 0)
+    }
+
+    public init(samples: [Float], startedAt: Date, endedAt: Date) {
+        self.samples = samples
+        self.startedAt = startedAt
+        self.endedAt = endedAt
     }
 }
 
-struct SpeakerAttributedTranscriptDocument: Codable, Equatable {
-    let schemaVersion: Int
-    let createdAt: Date
-    let fullText: String
-    let chunks: [SpeakerAttributedTranscriptChunk]
-    let diarizationSegments: [SpeakerDiarizationSegment]
-    let speakerCount: Int
-    let engineMetadata: SpeechEngineMetadata?
+public struct SpeakerAttributedTranscriptDocument: Codable, Equatable {
+    public let schemaVersion: Int
+    public let createdAt: Date
+    public let fullText: String
+    public let chunks: [SpeakerAttributedTranscriptChunk]
+    public let diarizationSegments: [SpeakerDiarizationSegment]
+    public let speakerCount: Int
+    public let engineMetadata: SpeechEngineMetadata?
 
-    init(
+    public init(
         schemaVersion: Int = 1,
         createdAt: Date = Date(),
         fullText: String,
@@ -36,22 +42,22 @@ struct SpeakerAttributedTranscriptDocument: Codable, Equatable {
         self.engineMetadata = engineMetadata
     }
 
-    var formattedText: String {
+    public var formattedText: String {
         chunks.map(\.formattedLine).joined(separator: "\n")
     }
 }
 
-struct SpeakerAttributedTranscriptChunk: Codable, Equatable, Identifiable {
-    let id: UUID
-    let text: String
-    let timestamp: Date
-    let relativeTimeSeconds: Double?
-    let speakerLabel: String?
-    let speakerProfileID: String?
-    let startTimeSeconds: Double?
-    let endTimeSeconds: Double?
+public struct SpeakerAttributedTranscriptChunk: Codable, Equatable, Identifiable {
+    public let id: UUID
+    public let text: String
+    public let timestamp: Date
+    public let relativeTimeSeconds: Double?
+    public let speakerLabel: String?
+    public let speakerProfileID: String?
+    public let startTimeSeconds: Double?
+    public let endTimeSeconds: Double?
 
-    init(
+    public init(
         id: UUID = UUID(),
         text: String,
         timestamp: Date,
@@ -71,20 +77,20 @@ struct SpeakerAttributedTranscriptChunk: Codable, Equatable, Identifiable {
         self.endTimeSeconds = endTimeSeconds
     }
 
-    var formattedLine: String {
+    public var formattedLine: String {
         let prefix = speakerLabel.map { "[\($0)] " } ?? ""
         return "\(prefix)\(text)"
     }
 }
 
-struct SpeakerDiarizationSegment: Codable, Equatable, Identifiable {
-    let id: UUID
-    let speakerLabel: String
-    let startTimeSeconds: Double
-    let endTimeSeconds: Double
-    let qualityScore: Float?
+public struct SpeakerDiarizationSegment: Codable, Equatable, Identifiable {
+    public let id: UUID
+    public let speakerLabel: String
+    public let startTimeSeconds: Double
+    public let endTimeSeconds: Double
+    public let qualityScore: Float?
 
-    init(
+    public init(
         id: UUID = UUID(),
         speakerLabel: String,
         startTimeSeconds: Double,
@@ -98,18 +104,18 @@ struct SpeakerDiarizationSegment: Codable, Equatable, Identifiable {
         self.qualityScore = qualityScore
     }
 
-    func contains(timeSeconds: Double) -> Bool {
+    public func contains(timeSeconds: Double) -> Bool {
         timeSeconds >= startTimeSeconds && timeSeconds <= endTimeSeconds
     }
 }
 
-struct SpeechEngineMetadata: Codable, Equatable, Sendable {
-    let asrEngine: String
-    let diarizationEngine: String
-    let modelVersion: String?
-    let localeIdentifier: String?
+public struct SpeechEngineMetadata: Codable, Equatable, Sendable {
+    public let asrEngine: String
+    public let diarizationEngine: String
+    public let modelVersion: String?
+    public let localeIdentifier: String?
 
-    init(
+    public init(
         asrEngine: String,
         diarizationEngine: String,
         modelVersion: String? = nil,
