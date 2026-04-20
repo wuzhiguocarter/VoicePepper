@@ -84,6 +84,13 @@ let package = Package(
             path: "Sources/VoicePepperEval"
         ),
 
+        // VoicePepperCore unit tests (requires full Xcode, not CommandLineTools)
+        .testTarget(
+            name: "VoicePepperCoreTests",
+            dependencies: ["VoicePepperCore"],
+            path: "Tests/VoicePepperCoreTests"
+        ),
+
         // Main macOS app target
         .executableTarget(
             name: "VoicePepper",

@@ -163,6 +163,9 @@ def transcribe_via_binary(
     except subprocess.TimeoutExpired:
         print(f"  [警告] 超时: {wav_path}", file=sys.stderr)
         return []
+    except (FileNotFoundError, OSError) as e:
+        print(f"  [错误] 无法启动 binary: {e}", file=sys.stderr)
+        return []
 
     if result.returncode != 0:
         print(f"  [错误] binary 退出码 {result.returncode}: {result.stderr[:200]}", file=sys.stderr)
