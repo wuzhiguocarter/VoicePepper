@@ -184,3 +184,7 @@ ok
 ---
 
 /kb-crm-cli 补充如上提到测试缺口
+
+---
+
+WhisperKit + SpeakerKit
