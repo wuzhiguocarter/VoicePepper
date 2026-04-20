@@ -401,6 +401,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             NSLog("[AppDelegate] filePlayback: WhisperKit 模型未就绪")
             return
         }
+        // 评估流水线通过 `defaults write` 注入路径，需在启动时同步最新值
+        UserDefaults.standard.synchronize()
+        if let path = UserDefaults.standard.string(forKey: "filePlaybackWAVPath"), !path.isEmpty {
+            appState.filePlaybackWAVURL = URL(fileURLWithPath: path)
+        }
         guard let url = appState.filePlaybackWAVURL else {
             NSLog("[AppDelegate] filePlayback: 未选择 WAV 文件，请在偏好设置中选择")
             return
