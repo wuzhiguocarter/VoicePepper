@@ -1,5 +1,6 @@
 import SwiftUI
 import KeyboardShortcuts
+import UniformTypeIdentifiers
 
 // MARK: - Preferences View
 
@@ -28,6 +29,10 @@ struct PreferencesView: View {
                     ForEach(RecordingSource.allCases) { source in
                         Text(source.displayName).tag(source)
                     }
+                }
+
+                if appState.recordingSource == .filePlayback {
+                    filePlaybackRow
                 }
             }
 
@@ -151,6 +156,41 @@ struct PreferencesView: View {
         .formStyle(.grouped)
         .padding()
         .frame(width: 520, height: 640)
+    }
+
+    // MARK: File Playback Row
+
+    private var filePlaybackRow: some View {
+        HStack(spacing: 8) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("WAV 文件")
+                    .font(.body)
+                if let url = appState.filePlaybackWAVURL {
+                    Text(url.lastPathComponent)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                } else {
+                    Text("未选择文件（需 16kHz mono WAV）")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+            Spacer()
+            Button("选择文件…") {
+                let panel = NSOpenPanel()
+                panel.title = "选择 WAV 文件"
+                panel.allowedContentTypes = [.wav, .audio]
+                panel.allowsMultipleSelection = false
+                panel.canChooseDirectories = false
+                if panel.runModal() == .OK {
+                    appState.filePlaybackWAVURL = panel.url
+                }
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+        }
     }
 
     // MARK: BLE Scan Section

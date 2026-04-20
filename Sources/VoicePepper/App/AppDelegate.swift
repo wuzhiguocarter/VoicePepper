@@ -27,6 +27,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var experimentalWhisperKitService: WhisperKitASRService?
     private var experimentalSpeakerKitService: SpeakerKitDiarizationService?
     private var timelineMerger: TimelineMerger?
+    private let audioFileSource = AudioFileSource()
 
     // BLE 录音笔服务
     let bleDeviceManager = BLEDeviceManager()
@@ -167,6 +168,39 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     }
                 } else {
                     transcriptionSvc?.enqueue(segment)
+                }
+            }
+            .store(in: &cancellables)
+
+        // filePlayback audio → WhisperKit + SpeakerKit（仅实验性模式）
+        audioFileSource.audioSegmentPublisher
+            .sink { [weak self] segment in
+                guard let self,
+                      self.appState.recordingSource == .filePlayback,
+                      self.appState.speechPipelineMode == .experimentalArgmaxOSS,
+                      let wk = self.experimentalWhisperKitService else { return }
+                Task { await wk.enqueue(segment) }
+                if let sk = self.experimentalSpeakerKitService {
+                    Task { await sk.enqueue(segment) }
+                }
+            }
+            .store(in: &cancellables)
+
+        // filePlayback 会话结束 → 持久化
+        audioFileSource.sessionEndPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] session in
+                guard let self else { return }
+                Task { @MainActor in
+                    if let merger = self.timelineMerger {
+                        let chunks = await merger.snapshot()
+                        await self.recordingFileService.saveWithRealtimeChunks(
+                            session: session,
+                            chunks: chunks
+                        )
+                    }
+                    self.appState.stopRecording()
+                    self.appState.clearSession()
                 }
             }
             .store(in: &cancellables)
@@ -323,6 +357,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             startMicRecording()
         case .bluetoothRecorder:
             startBLERecording()
+        case .filePlayback:
+            startFilePlayback()
         }
     }
 
@@ -332,6 +368,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             audioCaptureService?.stop()
         case .bluetoothRecorder:
             bleRecorderService?.stopRealtimeTranscription()
+        case .filePlayback:
+            audioFileSource.stop()
         }
         appState.stopRecording()
     }
@@ -342,6 +380,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             NSLog("[AppDelegate] WhisperKit 模型未就绪，无法开始录音: %@", appState.whisperKitModelStatus)
             return
         }
+        // 新会话开始，重置 WhisperKit 时间轴
+        if let wk = experimentalWhisperKitService {
+            Task { await wk.resetTimeline() }
+        }
         audioCaptureService?.start { [weak self] error in
             Task { @MainActor in
                 if let error {
@@ -351,6 +393,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 }
             }
         }
+    }
+
+    private func startFilePlayback() {
+        guard appState.speechPipelineMode == .experimentalArgmaxOSS,
+              appState.isWhisperKitModelReady else {
+            NSLog("[AppDelegate] filePlayback: WhisperKit 模型未就绪")
+            return
+        }
+        guard let url = appState.filePlaybackWAVURL else {
+            NSLog("[AppDelegate] filePlayback: 未选择 WAV 文件，请在偏好设置中选择")
+            return
+        }
+        // 新会话开始，重置 WhisperKit 时间轴
+        if let wk = experimentalWhisperKitService {
+            Task { await wk.resetTimeline() }
+        }
+        appState.startRecording()
+        // filePlayback 使用 15s 大块，接近 Whisper 原生 30s 窗口，显著提升 ASR 质量
+        Task { await audioFileSource.play(url: url, chunkDuration: 15.0) }
     }
 
     private func startBLERecording() {

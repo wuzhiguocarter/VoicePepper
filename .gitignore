@@ -47,3 +47,4 @@ build/
 *.key
 Secrets.swift
 test-results/
+data/eval
