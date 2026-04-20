@@ -1,0 +1,174 @@
+/opsx:explore 下一步应该做什么?
+
+---
+
+/kb-dev-workflow 根据如上规划, 继续向下推进
+
+---
+
+/kb-dev-workflow 继续
+
+---
+
+/kb-dev-workflow 继续
+
+---
+
+合并PR吧
+
+---
+
+按照 docs/solutions/best-practices/whisperkit-speakerkit-realtime-asr-diarization-migration-design-2026-04-19.md 继续下一步是什么?
+
+---
+
+WhisperKit+SpeakerKit 使用的是什么模型? 有模型管理界面吗?
+
+---
+
+WhisperKit使用largev3模型; 先做 Phase 2（SpeakerKit 接入）
+
+---
+
+研发测试阶段提前下载WhisperKit large-v3 模型（~947MB）,不要等到启动时才下载
+
+---
+
+[Image #4]
+
+---
+
+OK, 那先把当前PR合并
+
+---
+
+/kb-dev-workflow  关于 旁路真实录音通道做可重复评估 的问题：
+
+  这是个值得做的工程改进，但我建议作为 Phase 3 单独的 change 来推进。核心设计如下：
+
+  filePlayback source
+      │
+      ├── AudioFileSource（读取 WAV → 16kHz PCM → AudioSegment chunks）
+      │
+      └── AppDelegate.audioSegmentPublisher（复用现有路由逻辑）
+              │
+              ├── WhisperKitASRService.enqueue()
+              └── SpeakerKitDiarizationService.enqueue()
+                      │
+                      └── TimelineMerger → RealtimeTranscriptChunk
+
+  三个实现步骤：
+  1. AudioFileSource：读取本地 WAV，按 1~2 秒 chunk 推 AudioSegment，模拟 VAD 分段
+  2. AppDelegate 新增 filePlayback 分支，与 microphone 并列
+  3. 评估脚本：对比 appState.realtimeChunks 输出文本与 AISHELL-1 ground truth 计算 WER/DER
+
+  推荐数据集优先级：AISHELL-1（中文，最匹配当前 zh 默认语言）> AMI（多人说话，适合验证 SpeakerKit DER）
+
+---
+
+允许用户自己在界面选择录音源, 支持 filePlayback 录音源; 支持用户通过文件系统选择文件路径
+
+---
+
+<task-notification>
+<task-id>a8f539f3213a51a7f</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-wuzhiguo-projects-VoicePepper/23b6c7c1-81bc-46d7-9dd4-91e497d7a44a/tasks/a8f539f3213a51a7f.output</output-file>
+<status>completed</status>
+<summary>Agent "下载 AISHELL-1 和 AMI 样例数据集" completed</summary>
+<result>You've hit your limit · resets 12am (Asia/Shanghai)</result>
+<usage><total_tokens>1332</total_tokens><tool_uses>35</tool_uses><duration_ms>776345</duration_ms></usage>
+</task-notification>
+
+---
+
+[Image #1] 刚才测试文件回放, 发现每一个chunk 切的很细, 不到1s的音频, 导致ASR效果极差
+
+---
+
+继续
+
+---
+
+/commit-commands:commit-push-pr
+
+---
+
+合并PR
+
+---
+
+data/eval 数据集下载好像中断了, 帮我继续下载, 在后台subagent下载; 遇到网络问题可以 source ~/.claude_env 挂代理下载
+
+---
+
+参考'/Users/wuzhiguo/obsidian-notes/🔬 AI工程化/VoicePepper测试基础设施-系统调研-20260419.md' 结合你自己的思考建立一个标准化的自动化评估流水线, 避免我每次手动测试.
+
+---
+
+<task-notification>
+<task-id>a37c3329592b55811</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-wuzhiguo-projects-VoicePepper/23b6c7c1-81bc-46d7-9dd4-91e497d7a44a/tasks/a37c3329592b55811.output</output-file>
+<status>completed</status>
+<summary>Agent "继续下载 AISHELL-1 测试集和 AMI 数据集" completed</summary>
+<result>所有任务完成。以下是执行摘要：
+
+---
+
+## 执行结果
+
+### 任务 1：AISHELL-1 测试集
+
+- **方案调整**：openslr.org 不支持按说话人单独下载（只有 15GB 整包），改从 Hugging Face `AudioLLMs/aishell_1_zh_test` 下载 3 个 Parquet 文件（共 1.1GB）并提取 WAV
+- **结果**：6920 个 WAV 文件提取到 `/Users/wuzhiguo/projects/VoicePepper/data/eval/aishell1/data_aishell/wav/test/`，总计 1.1GB
+- **转录**：生成 `aishell_test_transcript.txt`（6920 行，格式：`test_NNNNN &lt;中文文本&gt;`）
+
+### 任务 2：AMI Meeting Corpus
+
+- **Mix-Headset 全会议音频**：EN2001a/b/d/e 四个 WAV 文件全部下载成功，共 497MB（160+105+108+124MB）
+- **句子级样本**：从 `edinburghcstr/ami` HF 数据集下载 4 个 Parquet 文件，提取前 50 条句子级 WAV 到 `utterances/` 目录
+
+### 任务 3：AMI 转录文本
+
+- AMI 官方 XML 转录路径 404 不可用
+- 改从 HF `edinburghcstr/ami` 数据集提取，保存 `ami_test_transcript.txt`（12643 条，格式：`&lt;audio_id&gt; &lt;英文文本&gt;`）
+
+### 任务 4：README.md
+
+- 生成 `/Users/wuzhiguo/projects/VoicePepper/data/eval/README.md`，含目录结构、文件大小、评估脚本示例命令和版权说明
+
+### 磁盘占用总计：4.0GB</result>
+<usage><total_tokens>56658</total_tokens><tool_uses>47</tool_uses><duration_ms>1589824</duration_ms></usage>
+</task-notification>
+
+---
+
+使用简体中文对话
+
+---
+
+前面进展总结
+
+---
+
+评估流水线 有测试吗?
+
+---
+
+ok
+
+---
+
+- 首次评估运行 — 启动 App，运行 eval_pipeline.py --n-samples 50，验证 WER 数值基线
+  — AMI 英文 DER 评估 + 独立二进制模式（不依赖 App UI）
+
+/kb-dev-workflow
+
+---
+
+按这个方向重新 propose 现有的 ami-standalone-eval-pipeline change 需要删除重来
+
+---
+
+/kb-dev-workflow 继续

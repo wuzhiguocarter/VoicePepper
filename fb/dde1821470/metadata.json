@@ -1,0 +1,52 @@
+{
+  "cli_version": "0.5.5",
+  "checkpoint_id": "fbdde1821470",
+  "strategy": "manual-commit",
+  "branch": "feat/eval-pipeline",
+  "checkpoints_count": 4,
+  "files_touched": [
+    "Package.swift",
+    "Sources/VoicePepper/App/AppDelegate.swift",
+    "Sources/VoicePepper/Models/AppState.swift",
+    "Sources/VoicePepper/Models/RealtimeSpeechPipeline.swift",
+    "Sources/VoicePepper/Models/SpeakerAttributedTranscript.swift",
+    "Sources/VoicePepper/Services/AudioCaptureService.swift",
+    "Sources/VoicePepper/Services/AudioFileSource.swift",
+    "Sources/VoicePepper/Services/BLE/BLERecorderService.swift",
+    "Sources/VoicePepper/Services/FluidAudioDiarizationService.swift",
+    "Sources/VoicePepper/Services/RecordingFileService.swift",
+    "Sources/VoicePepper/Services/SpeakerKitDiarizationService.swift",
+    "Sources/VoicePepper/Services/TimelineMerger.swift",
+    "Sources/VoicePepper/Services/TranscriptionService.swift",
+    "Sources/VoicePepper/Services/WhisperKitASRService.swift",
+    "Sources/VoicePepper/UI/PreferencesView.swift",
+    "Sources/VoicePepper/UI/TranscriptionListView.swift",
+    "Sources/VoicePepper/UI/TranscriptionPopoverView.swift",
+    "Sources/VoicePepperCore/AudioFileSource.swift",
+    "Sources/VoicePepperCore/PipelineTypes.swift",
+    "Sources/VoicePepperCore/RealtimeSpeechPipeline.swift",
+    "Sources/VoicePepperCore/SpeakerAttributedTranscript.swift",
+    "Sources/VoicePepperCore/SpeakerKitDiarizationService.swift",
+    "Sources/VoicePepperCore/TimelineMerger.swift",
+    "Sources/VoicePepperCore/WhisperKitASRService.swift",
+    "Sources/VoicePepperEval/main.swift",
+    "openspec/specs/audio-capture/spec.md",
+    "scripts/standalone_eval.py",
+    "tests/test_standalone_eval.py"
+  ],
+  "sessions": [
+    {
+      "metadata": "/fb/dde1821470/0/metadata.json",
+      "transcript": "/fb/dde1821470/0/full.jsonl",
+      "content_hash": "/fb/dde1821470/0/content_hash.txt",
+      "prompt": "/fb/dde1821470/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 22718,
+    "cache_creation_tokens": 1648374,
+    "cache_read_tokens": 74019472,
+    "output_tokens": 306615,
+    "api_call_count": 663
+  }
+}
