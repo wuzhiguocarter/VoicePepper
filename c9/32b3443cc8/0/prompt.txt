@@ -196,3 +196,7 @@ WhisperKit + SpeakerKit
 ---
 
 '/Users/wuzhiguo/Library/Application Support/VoicePepper/Recordings/Recording_20260420_171603.wav' '/Users/wuzhiguo/Library/Application Support/VoicePepper/Recordings/Recording_20260420_171603.txt' '/Users/wuzhiguo/Library/Application Support/VoicePepper/Recordings/Recording_20260420_171603.json' 这是我使用蓝牙录音笔录制的, 我发现录了1分钟在界面上都没有看到事实转录的文字
+
+---
+
+/commit-commands:commit-push-pr
