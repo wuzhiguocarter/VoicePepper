@@ -241,10 +241,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let bleSvc = BLERecorderService(deviceManager: bleDeviceManager, appState: appState)
         bleRecorderService = bleSvc
 
-        // BLE audio → transcription
+        // BLE audio → transcription（按 pipeline 模式路由，与麦克风逻辑保持一致）
         bleSvc.audioSegmentPublisher
-            .sink { [weak transcriptionSvc] segment in
-                transcriptionSvc?.enqueue(segment)
+            .sink { [weak self, weak transcriptionSvc] segment in
+                guard let self else { return }
+                if self.appState.speechPipelineMode == .experimentalArgmaxOSS,
+                   let wk = self.experimentalWhisperKitService {
+                    Task { await wk.enqueue(segment) }
+                    if let sk = self.experimentalSpeakerKitService {
+                        Task { await sk.enqueue(segment) }
+                    }
+                } else {
+                    transcriptionSvc?.enqueue(segment)
+                }
             }
             .store(in: &cancellables)
 
@@ -262,13 +271,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .sink { [weak self] session in
                 guard let self else { return }
                 Task { @MainActor in
-                    await self.transcriptionService?.waitUntilIdle()
-                    let entries = self.appState.entries
-                    await self.recordingFileService.save(
-                        session: session,
-                        transcriptionEntries: entries,
-                        diarizationService: self.diarizationService
-                    )
+                    if self.appState.speechPipelineMode == .experimentalArgmaxOSS,
+                       let wk = self.experimentalWhisperKitService,
+                       let merger = self.timelineMerger {
+                        await wk.flush()
+                        await wk.waitUntilIdle()
+                        let chunks = await merger.snapshot()
+                        await self.recordingFileService.saveWithRealtimeChunks(
+                            session: session,
+                            chunks: chunks
+                        )
+                    } else {
+                        await self.transcriptionService?.waitUntilIdle()
+                        let entries = self.appState.entries
+                        await self.recordingFileService.save(
+                            session: session,
+                            transcriptionEntries: entries,
+                            diarizationService: self.diarizationService
+                        )
+                    }
                     self.appState.clearSession()
                 }
             }
