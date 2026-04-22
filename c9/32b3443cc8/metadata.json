@@ -1,0 +1,25 @@
+{
+  "cli_version": "0.5.5",
+  "checkpoint_id": "c932b3443cc8",
+  "strategy": "manual-commit",
+  "branch": "feat/eval-pipeline",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "Sources/VoicePepper/App/AppDelegate.swift"
+  ],
+  "sessions": [
+    {
+      "metadata": "/c9/32b3443cc8/0/metadata.json",
+      "transcript": "/c9/32b3443cc8/0/full.jsonl",
+      "content_hash": "/c9/32b3443cc8/0/content_hash.txt",
+      "prompt": "/c9/32b3443cc8/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 23688,
+    "cache_creation_tokens": 1859988,
+    "cache_read_tokens": 80560217,
+    "output_tokens": 336954,
+    "api_call_count": 724
+  }
+}
