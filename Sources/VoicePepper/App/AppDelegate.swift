@@ -2,6 +2,7 @@ import AppKit
 import SwiftUI
 import Combine
 import KeyboardShortcuts
+import VoicePepperCore
 
 // MARK: - KeyboardShortcuts Name (Task 3.1)
 
@@ -240,10 +241,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let bleSvc = BLERecorderService(deviceManager: bleDeviceManager, appState: appState)
         bleRecorderService = bleSvc
 
-        // BLE audio → transcription
+        // BLE audio → transcription（按 pipeline 模式路由，与麦克风逻辑保持一致）
         bleSvc.audioSegmentPublisher
-            .sink { [weak transcriptionSvc] segment in
-                transcriptionSvc?.enqueue(segment)
+            .sink { [weak self, weak transcriptionSvc] segment in
+                guard let self else { return }
+                if self.appState.speechPipelineMode == .experimentalArgmaxOSS,
+                   let wk = self.experimentalWhisperKitService {
+                    Task { await wk.enqueue(segment) }
+                    if let sk = self.experimentalSpeakerKitService {
+                        Task { await sk.enqueue(segment) }
+                    }
+                } else {
+                    transcriptionSvc?.enqueue(segment)
+                }
             }
             .store(in: &cancellables)
 
@@ -261,13 +271,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .sink { [weak self] session in
                 guard let self else { return }
                 Task { @MainActor in
-                    await self.transcriptionService?.waitUntilIdle()
-                    let entries = self.appState.entries
-                    await self.recordingFileService.save(
-                        session: session,
-                        transcriptionEntries: entries,
-                        diarizationService: self.diarizationService
-                    )
+                    if self.appState.speechPipelineMode == .experimentalArgmaxOSS,
+                       let wk = self.experimentalWhisperKitService,
+                       let merger = self.timelineMerger {
+                        await wk.flush()
+                        await wk.waitUntilIdle()
+                        let chunks = await merger.snapshot()
+                        await self.recordingFileService.saveWithRealtimeChunks(
+                            session: session,
+                            chunks: chunks
+                        )
+                    } else {
+                        await self.transcriptionService?.waitUntilIdle()
+                        let entries = self.appState.entries
+                        await self.recordingFileService.save(
+                            session: session,
+                            transcriptionEntries: entries,
+                            diarizationService: self.diarizationService
+                        )
+                    }
                     self.appState.clearSession()
                 }
             }
@@ -371,6 +393,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         case .filePlayback:
             audioFileSource.stop()
         }
+        // 强制刷新 WhisperKit accumulation buffer 中尚未满 10s 的剩余音频
+        if let wk = experimentalWhisperKitService {
+            Task { await wk.flush() }
+        }
         appState.stopRecording()
     }
 
@@ -400,6 +426,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
               appState.isWhisperKitModelReady else {
             NSLog("[AppDelegate] filePlayback: WhisperKit 模型未就绪")
             return
+        }
+        // 评估流水线通过 `defaults write` 注入路径，需在启动时同步最新值
+        UserDefaults.standard.synchronize()
+        if let path = UserDefaults.standard.string(forKey: "filePlaybackWAVPath"), !path.isEmpty {
+            appState.filePlaybackWAVURL = URL(fileURLWithPath: path)
         }
         guard let url = appState.filePlaybackWAVURL else {
             NSLog("[AppDelegate] filePlayback: 未选择 WAV 文件，请在偏好设置中选择")

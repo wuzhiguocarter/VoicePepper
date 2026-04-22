@@ -13,6 +13,8 @@ let package = Package(
     platforms: [.macOS(.v14)],
     products: [
         .executable(name: "VoicePepper", targets: ["VoicePepper"]),
+        .executable(name: "VoicePepperEval", targets: ["VoicePepperEval"]),
+        .library(name: "VoicePepperCore", targets: ["VoicePepperCore"]),
     ],
     dependencies: [
         // Global hotkey management - pinned to avoid #Preview macro issues with CLI tools
@@ -64,21 +66,44 @@ let package = Package(
             ]
         ),
 
+        // Shared pipeline library (no AppKit/UI dependency)
+        .target(
+            name: "VoicePepperCore",
+            dependencies: [
+                .product(name: "FluidAudio", package: "FluidAudio"),
+                .product(name: "WhisperKit", package: "argmax-oss-swift"),
+                .product(name: "SpeakerKit", package: "argmax-oss-swift"),
+            ],
+            path: "Sources/VoicePepperCore"
+        ),
+
+        // CLI eval binary
+        .executableTarget(
+            name: "VoicePepperEval",
+            dependencies: ["VoicePepperCore"],
+            path: "Sources/VoicePepperEval"
+        ),
+
+        // VoicePepperCore unit tests (requires full Xcode, not CommandLineTools)
+        .testTarget(
+            name: "VoicePepperCoreTests",
+            dependencies: ["VoicePepperCore"],
+            path: "Tests/VoicePepperCoreTests"
+        ),
+
         // Main macOS app target
         .executableTarget(
             name: "VoicePepper",
             dependencies: [
                 "CWhisper",
                 "COpus",
+                "VoicePepperCore",
                 .product(name: "KeyboardShortcuts", package: "KeyboardShortcuts"),
                 .product(name: "FluidAudio", package: "FluidAudio"),
-                .product(name: "WhisperKit", package: "argmax-oss-swift"),
-                .product(name: "SpeakerKit", package: "argmax-oss-swift"),
             ],
             path: "Sources/VoicePepper",
             exclude: ["Resources/VoicePepper.entitlements"],
             swiftSettings: [
-                // Pass ggml/whisper include path to Swift's clang importer (for CWhisper module)
                 .unsafeFlags(["-Xcc", "-I\(whisperInclude)"]),
             ],
             linkerSettings: [

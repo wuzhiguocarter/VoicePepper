@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import VoicePepperCore
 
 // MARK: - Transcription Popover View (Task 6.2)
 // Main panel: status bar at top, transcript list, action buttons at bottom.

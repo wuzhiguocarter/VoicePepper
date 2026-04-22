@@ -1,0 +1,88 @@
+name: WER Evaluation Pipeline
+
+# 触发条件：手动触发 or 每周一 UTC 00:00
+on:
+  workflow_dispatch:
+    inputs:
+      n_samples:
+        description: "评估样本数（-1 = 全量）"
+        default: "50"
+        required: false
+      seed:
+        description: "随机种子"
+        default: "42"
+        required: false
+  schedule:
+    - cron: "0 0 * * 1"  # 每周一 00:00 UTC
+
+# 注意: 此 workflow 需要装有 VoicePepper 运行环境的自托管 macOS runner。
+# 原因: 评估流程依赖 macOS Accessibility API (PyObjC / AX) 驱动 App UI，
+#        无法在 GitHub 托管的 runner（无显示器/AX权限）上执行。
+#
+# 自托管 runner 配置要求:
+#   - macOS 14+，已开启 Accessibility 权限
+#   - .build/debug/VoicePepper 可执行（已编译）
+#   - data/eval/aishell1/data_aishell/ 已下载
+#   - arch -x86_64 Python + PyObjC 可用
+#   - runner label: [self-hosted, macOS, voicepepper-eval]
+#
+# 关于 GitHub 托管 runner 的替代方案：
+#   Phase 2（计划中）将实现无需 UI 的 standalone 二进制评估，届时可用标准 runner。
+
+jobs:
+  wer-eval:
+    name: "WER 评估 (AISHELL-1)"
+    runs-on: [self-hosted, macOS, voicepepper-eval]
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build App (Debug)
+        run: swift build
+
+      - name: Start VoicePepper
+        run: |
+          pkill -9 -f ".build/debug/VoicePepper" 2>/dev/null || true
+          sleep 1
+          nohup .build/debug/VoicePepper > /tmp/voicepepper_eval.log 2>&1 &
+          sleep 3
+          echo "VoicePepper started: PID=$(pgrep -f '.build/debug/VoicePepper')"
+
+      - name: Wait for WhisperKit model ready
+        run: |
+          # App 启动后 WhisperKit 需要 10-30s 加载模型
+          sleep 30
+          echo "Model loading wait complete"
+
+      - name: Run WER evaluation
+        run: |
+          RUN_DIR="test-results/eval/run_$(date +%Y%m%d-%H%M%S)"
+          arch -x86_64 \
+            /Users/wuzhiguo/projects/macos-ui-automation-mcp/.venv/bin/python3 \
+            scripts/eval_pipeline.py \
+            --data-dir data/eval/aishell1/data_aishell \
+            --n-samples ${{ github.event.inputs.n_samples || '50' }} \
+            --seed ${{ github.event.inputs.seed || '42' }} \
+            --output-dir test-results/eval
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-results-${{ github.run_number }}
+          path: test-results/eval/
+          retention-days: 30
+
+      - name: Print summary
+        run: |
+          LATEST=$(ls -td test-results/eval/run_* | head -1)
+          echo "=== WER Summary ==="
+          cat "$LATEST/summary.json"
+          echo ""
+          echo "=== Report ==="
+          cat "$LATEST/report.md"
+
+      - name: Stop VoicePepper
+        if: always()
+        run: pkill -9 -f ".build/debug/VoicePepper" 2>/dev/null || true

@@ -1,5 +1,6 @@
 import AVFoundation
 import Combine
+import VoicePepperCore
 
 // MARK: - Audio Capture Error
 
@@ -7,14 +8,6 @@ enum AudioCaptureError: Error, Equatable {
     case permissionDenied
     case engineStartFailed(String)
     case converterSetupFailed
-}
-
-// MARK: - Audio Segment
-
-/// A segment of 16kHz mono PCM audio ready for transcription
-struct AudioSegment {
-    let samples: [Float]        // 16kHz mono float32
-    let capturedAt: Date
 }
 
 // MARK: - Audio Capture Service (Tasks 4.1 - 4.6)

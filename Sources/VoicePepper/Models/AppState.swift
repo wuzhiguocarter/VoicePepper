@@ -1,37 +1,6 @@
 import Foundation
 import Combine
-
-// MARK: - Recording Source
-
-enum RecordingSource: String, CaseIterable, Identifiable {
-    case microphone = "microphone"
-    case bluetoothRecorder = "bluetoothRecorder"
-    case filePlayback = "filePlayback"
-
-    var id: String { rawValue }
-
-    var displayName: String {
-        switch self {
-        case .microphone: return "麦克风"
-        case .bluetoothRecorder: return "蓝牙录音笔"
-        case .filePlayback: return "文件回放"
-        }
-    }
-}
-
-enum SpeechPipelineMode: String, CaseIterable, Identifiable {
-    case legacyWhisperCPP = "legacyWhisperCPP"
-    case experimentalArgmaxOSS = "experimentalArgmaxOSS"
-
-    var id: String { rawValue }
-
-    var displayName: String {
-        switch self {
-        case .legacyWhisperCPP: return "whisper.cpp + FluidAudio"
-        case .experimentalArgmaxOSS: return "WhisperKit + SpeakerKit (Experimental)"
-        }
-    }
-}
+import VoicePepperCore
 
 // MARK: - Recording State
 

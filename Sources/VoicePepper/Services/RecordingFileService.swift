@@ -1,5 +1,6 @@
 import AVFoundation
 import Foundation
+import VoicePepperCore
 
 // MARK: - Recording Item
 

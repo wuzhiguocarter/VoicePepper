@@ -1,4 +1,5 @@
 import SwiftUI
+import VoicePepperCore
 
 // MARK: - Transcription List
 

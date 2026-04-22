@@ -48,3 +48,4 @@ build/
 Secrets.swift
 test-results/
 data/eval
+__pycache__

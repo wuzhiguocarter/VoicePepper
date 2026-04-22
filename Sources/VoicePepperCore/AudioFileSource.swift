@@ -1,13 +1,15 @@
 import AVFoundation
 import Combine
 
-final class AudioFileSource {
-    let audioSegmentPublisher = PassthroughSubject<AudioSegment, Never>()
-    let sessionEndPublisher = PassthroughSubject<RecordingSessionData, Never>()
+public final class AudioFileSource {
+    public let audioSegmentPublisher = PassthroughSubject<AudioSegment, Never>()
+    public let sessionEndPublisher = PassthroughSubject<RecordingSessionData, Never>()
 
     private var isStopped = false
 
-    func play(url: URL, chunkDuration: TimeInterval = 1.5) async {
+    public init() {}
+
+    public func play(url: URL, chunkDuration: TimeInterval = 1.5) async {
         isStopped = false
         let startedAt = Date()
 
@@ -54,7 +56,7 @@ final class AudioFileSource {
         sessionEndPublisher.send(RecordingSessionData(samples: allSamples, startedAt: startedAt, endedAt: Date()))
     }
 
-    func stop() {
+    public func stop() {
         isStopped = true
     }
 }
